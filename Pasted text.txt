@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Local Job Listings USA — App Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#11539E;
+    --blue-deep:#0B3B72;
+    --blue-tint:#E8F0FA;
+    --ink:#0C1B2A;
+    --ink-2:#5A6B7E;
+    --hivis:#FFC400;
+    --hivis-deep:#E0A800;
+    --green:#15A34A;
+    --green-tint:#E5F6EC;
+    --red-soft:#B23B3B;
+    --red-tint:#FBEDED;
+    --canvas:#EEF1F5;
+    --card:#FFFFFF;
+    --line:#E2E8F0;
+    --shadow:0 6px 20px rgba(12,27,42,.10);
+    --shadow-lg:0 16px 40px rgba(12,27,42,.18);
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Barlow',system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 600px at 20% -5%, #1c4f86 0%, transparent 60%),
+      radial-gradient(900px 600px at 100% 110%, #0a2a4d 0%, transparent 55%),
+      #0d2542;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:28px 14px;color:var(--ink);
+  }
+  .stage{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .stage-tag{
+    color:#cfe0f3;font-family:'Barlow Condensed';letter-spacing:.14em;
+    text-transform:uppercase;font-size:13px;font-weight:600;text-align:center;
+  }
+  .stage-tag b{color:#fff;}
+
+  /* ===== PHONE FRAME ===== */
+  .phone{
+    width:390px;height:auto;max-height:calc(100vh - 56px);
+    aspect-ratio:390/844;
+    background:#000;border-radius:46px;padding:11px;
+    box-shadow:var(--shadow-lg),0 0 0 2px #2b3950;
+    position:relative;flex:none;
+  }
+  .screen-area{
+    position:relative;width:100%;height:100%;
+    background:var(--canvas);border-radius:36px;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .notch{
+    position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:128px;height:26px;background:#000;border-radius:0 0 16px 16px;z-index:60;
+  }
+  .statusbar{
+    position:relative;z-index:55;display:flex;justify-content:space-between;
+    align-items:center;padding:11px 24px 5px;font-size:13px;font-weight:600;
+    color:var(--ink);flex:none;
+  }
+  .statusbar.on-blue{color:#fff;}
+  .sb-icons{display:flex;gap:6px;align-items:center;}
+  .sb-icons svg{display:block;}
+
+  /* ===== SCREENS ===== */
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+  .scroll::-webkit-scrollbar{width:0;}
+  .screen{display:none;flex-direction:column;height:100%;}
+  .screen.active{display:flex;animation:fade .26s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){.screen.active{animation:none;}}
+
+  h1,h2,h3{font-family:'Barlow Condensed';margin:0;line-height:1.04;font-weight:700;}
+  p{margin:0;line-height:1.45;}
+
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;border:none;cursor:pointer;font-family:'Barlow';
+    font-weight:600;font-size:17px;border-radius:14px;padding:16px;
+    transition:transform .08s, filter .15s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-hivis{background:var(--hivis);color:#1b1300;}
+  .btn-hivis:hover{filter:brightness(1.04);}
+  .btn-ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line);}
+  .btn-dark{background:var(--ink);color:#fff;}
+  .btn:focus-visible{outline:3px solid var(--hivis);outline-offset:2px;}
+
+  .pad{padding:18px 20px;}
+
+  /* ===== SPLASH ===== */
+  #splash{background:
+      radial-gradient(700px 420px at 50% -10%, #1c5797 0%, transparent 60%),
+      linear-gradient(180deg,#11539E,#0B3B72);
+    align-items:center;justify-content:center;text-align:center;color:#fff;gap:0;}
+  .logo-mark{
+    width:84px;height:84px;border-radius:22px;background:#fff;
+    display:flex;align-items:center;justify-content:center;margin-bottom:22px;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  .logo-mark span{font-family:'Barlow Condensed';font-weight:700;font-size:46px;color:var(--blue);line-height:1;}
+  .logo-mark .pin{position:absolute;}
+  #splash h1{font-size:34px;letter-spacing:.01em;}
+  #splash .usa{color:var(--hivis);}
+  #splash p{color:#cfe0f3;margin-top:10px;font-size:16px;max-width:240px;}
+  .splash-stats{display:flex;gap:22px;margin:30px 0 34px;}
+  .splash-stats div{display:flex;flex-direction:column;align-items:center;}
+  .splash-stats b{font-family:'Barlow Condensed';font-size:26px;color:#fff;}
+  .splash-stats small{color:#a9c4e2;font-size:11px;letter-spacing:.04em;text-transform:uppercase;margin-top:2px;}
+
+  /* ===== ONBOARDING ROLE ===== */
+  #onboard{background:#fff;}
+  .ob-head{padding:30px 22px 10px;}
+  .role-card{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    background:#fff;border:1.5px solid var(--line);border-radius:18px;
+    padding:18px;margin-bottom:14px;cursor:pointer;transition:.15s;
+  }
+  .role-card:hover{border-color:var(--blue);box-shadow:var(--shadow);}
+  .role-ico{
+    width:52px;height:52px;border-radius:14px;flex:none;
+    display:flex;align-items:center;justify-content:center;background:var(--blue-tint);
+  }
+  .role-card.seeker .role-ico{background:var(--blue-tint);}
+  .role-card.employer .role-ico{background:#FFF4D6;}
+  .role-card.agency .role-ico{background:var(--green-tint);}
+  .role-card h3{font-size:21px;}
+  .role-card p{color:var(--ink-2);font-size:13px;margin-top:3px;}
+  .role-card .chev{margin-left:auto;color:var(--ink-2);}
+
+  /* ===== HEADERS ===== */
+  .appbar{
+    display:flex;align-items:center;gap:12px;padding:8px 18px 14px;flex:none;
+  }
+  .appbar.blue{background:var(--blue);color:#fff;}
+  .appbar h2{font-size:24px;}
+  .back{
+    width:38px;height:38px;border-radius:11px;border:none;background:#fff;
+    box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex:none;color:var(--ink);
+  }
+  .appbar.blue .back{background:rgba(255,255,255,.16);color:#fff;box-shadow:none;}
+
+  /* ===== FORMS ===== */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--ink);}
+  .input{
+    width:100%;border:1.5px solid var(--line);border-radius:13px;padding:14px;
+    font-family:'Barlow';font-size:16px;background:#fff;color:var(--ink);
+  }
+  .input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-tint);}
+  textarea.input{resize:none;min-height:90px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:9px;}
+  .chip{
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:999px;padding:10px 15px;font-size:14px;font-weight:600;
+    cursor:pointer;font-family:'Barlow';transition:.12s;user-select:none;
+  }
+  .chip:hover{border-color:var(--blue);}
+  .chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .chip.on.amber{background:var(--hivis);color:#1b1300;border-color:var(--hivis);}
+
+  .blk-label{font-weight:600;font-size:14px;margin:18px 0 9px;color:var(--ink);}
+
+  /* range */
+  .range-row{display:flex;align-items:center;gap:14px;}
+  input[type=range]{flex:1;accent-color:var(--blue);height:30px;}
+  .radius-val{font-family:'Barlow Condensed';font-weight:700;font-size:30px;color:var(--blue);min-width:74px;text-align:right;}
+  .radius-val small{font-size:14px;color:var(--ink-2);font-family:'Barlow';font-weight:600;}
+
+  .pay-readout{
+    display:flex;justify-content:space-between;font-family:'Barlow Condensed';
+    font-weight:700;color:var(--blue);font-size:22px;margin-top:6px;
+  }
+
+  /* ===== JOB FEED ===== */
+  #feed{background:var(--canvas);}
+  .feed-top{background:var(--blue);color:#fff;padding:8px 18px 16px;flex:none;}
+  .loc-pill{
+    display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);
+    border:none;color:#fff;border-radius:999px;padding:8px 13px;font-size:14px;
+    font-weight:600;font-family:'Barlow';cursor:pointer;
+  }
+  .feed-h{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+  .feed-h h2{font-size:25px;}
+  .toggle{
+    display:flex;background:rgba(255,255,255,.16);border-radius:11px;padding:3px;gap:2px;
+  }
+  .toggle button{
+    border:none;background:transparent;color:#cfe0f3;font-weight:600;font-family:'Barlow';
+    padding:7px 14px;border-radius:9px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:6px;
+  }
+  .toggle button.on{background:#fff;color:var(--blue);}
+
+  .filter-row{display:flex;gap:8px;overflow-x:auto;padding:12px 18px 4px;flex:none;}
+  .filter-row::-webkit-scrollbar{height:0;}
+  .fpill{
+    flex:none;border:1.5px solid var(--line);background:#fff;border-radius:999px;
+    padding:8px 13px;font-size:13px;font-weight:600;font-family:'Barlow';color:var(--ink);
+    display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;
+  }
+  .fpill.active{background:var(--blue-tint);border-color:var(--blue);color:var(--blue);}
+
+  .job-card{
+    background:#fff;border-radius:18px;padding:16px;margin:0 16px 14px;box-shadow:var(--shadow);
+    cursor:pointer;transition:transform .1s;position:relative;border:1px solid #eef1f5;
+  }
+  .job-card:active{transform:scale(.99);}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;}
+  .badge{font-size:11px;font-weight:700;border-radius:6px;padding:4px 8px;letter-spacing:.02em;text-transform:uppercase;font-family:'Barlow';}
+  .b-urgent{background:#FFEBEB;color:#C0392B;}
+  .b-featured{background:#FFF3D1;color:#9a6a00;}
+  .b-cat{background:var(--blue-tint);color:var(--blue);}
+  .b-multi{background:var(--green-tint);color:#0f7a37;}
+  .job-card h3{font-size:20px;margin-bottom:3px;}
+  .job-card .co{color:var(--ink-2);font-size:14px;font-weight:500;}
+  .job-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;}
+  .tag{
+    background:#F2F5F8;border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:600;
+    color:#42536a;display:flex;align-items:center;gap:5px;
+  }
+  .pay-line{display:flex;align-items:center;justify-content:space-between;margin-top:13px;padding-top:13px;border-top:1px solid var(--line);}
+  .pay{font-family:'Barlow Condensed';font-weight:700;font-size:23px;color:var(--ink);}
+  .pay small{font-size:14px;color:var(--ink-2);font-weight:600;}
+  .save-btn{
+    width:40px;height:40px;border-radius:12px;border:1.5px solid var(--line);background:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-2);flex:none;
+  }
+  .save-btn.saved{background:var(--hivis);border-color:var(--hivis);color:#1b1300;}
+  .posted{font-size:11.5px;color:#9aa7b6;margin-top:9px;font-weight:500;}
+
+  /* ===== MAP ===== */
+  #map-screen{background:var(--canvas);}
+  .map-canvas{
+    flex:1;position:relative;overflow:hidden;
+    background:
+      linear-gradient(#dfe6ee 1px,transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg,#dfe6ee 1px,transparent 1px) 0 0/40px 40px,
+      #eaf0f6;
+  }
+  .road{position:absolute;background:#fff;}
+  .radius-ring{
+    position:absolute;top:50%;left:50%;width:230px;height:230px;transform:translate(-50%,-50%);
+    border-radius:50%;background:rgba(17,83,158,.10);border:2px dashed rgba(17,83,158,.45);
+  }
+  .me-dot{
+    position:absolute;top:50%;left:50%;width:18px;height:18px;transform:translate(-50%,-50%);
+    background:var(--blue);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 6px rgba(17,83,158,.2);z-index:5;
+  }
+  .pin{
+    position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:4;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .pin .pin-pay{
+    background:var(--blue);color:#fff;font-family:'Barlow Condensed';font-weight:700;font-size:14px;
+    padding:4px 9px;border-radius:10px;box-shadow:var(--shadow);white-space:nowrap;
+  }
+  .pin.urgent .pin-pay{background:var(--red-soft);}
+  .pin .pin-stem{width:2px;height:8px;background:var(--blue);}
+  .pin.urgent .pin-stem{background:var(--red-soft);}
+  .map-card{
+    position:absolute;left:14px;right:14px;bottom:14px;background:#fff;border-radius:18px;
+    padding:15px;box-shadow:var(--shadow-lg);display:none;z-index:10;
+  }
+  .map-card.show{display:block;animation:fade .2s;}
+
+  /* ===== JOB DETAIL ===== */
+  #detail{background:#fff;}
+  .detail-hero{background:var(--blue);color:#fff;padding:6px 20px 22px;flex:none;}
+  .detail-hero .badges .b-cat{background:rgba(255,255,255,.18);color:#fff;}
+  .detail-hero h1{font-size:28px;margin:8px 0 4px;}
+  .detail-hero .co{color:#cfe0f3;font-size:15px;}
+  .detail-pay{font-family:'Barlow Condensed';font-weight:700;font-size:34px;margin-top:14px;}
+  .detail-pay small{font-size:16px;color:#cfe0f3;font-weight:600;}
+  .sec{padding:18px 20px;border-bottom:8px solid var(--canvas);}
+  .sec h3{font-size:19px;margin-bottom:10px;}
+  .sec p{color:#3c4d62;font-size:15px;}
+  .li{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;color:#3c4d62;font-size:15px;}
+  .li .dot{width:7px;height:7px;border-radius:50%;background:var(--hivis-deep);margin-top:7px;flex:none;}
+  .bens{display:flex;flex-wrap:wrap;gap:8px;}
+  .ben{background:var(--green-tint);color:#0f7a37;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600;}
+  .ai-fit{background:var(--blue-tint);border-radius:14px;padding:14px;margin:0 0 4px;}
+  .ai-fit .ai-h{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--blue);font-family:'Barlow Condensed';font-size:17px;margin-bottom:6px;}
+  .ai-fit p{font-size:14px;color:#34465c;}
+  .ai-disc{font-size:11px;color:var(--ink-2);margin-top:8px;font-style:italic;}
+
+  .sticky-apply{
+    flex:none;padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+    background:#fff;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;
+  }
+  .sticky-apply .save-btn{width:52px;height:52px;}
+
+  /* ===== APPLY FLOW ===== */
+  #apply{background:#fff;}
+  .step-dots{display:flex;gap:6px;padding:0 20px 6px;}
+  .step-dots i{height:5px;border-radius:3px;background:var(--line);flex:1;transition:.2s;}
+  .step-dots i.on{background:var(--blue);}
+  .apply-step{display:none;}
+  .apply-step.active{display:block;animation:fade .2s;}
+  .resume-opt{
+    display:flex;align-items:center;gap:13px;border:1.5px solid var(--line);border-radius:15px;
+    padding:15px;margin-bottom:12px;cursor:pointer;transition:.12s;
+  }
+  .resume-opt:hover{border-color:var(--blue);}
+  .resume-opt.sel{border-color:var(--blue);background:var(--blue-tint);}
+  .resume-opt .r-ico{width:46px;height:46px;border-radius:12px;background:var(--blue-tint);display:flex;align-items:center;justify-content:center;flex:none;color:var(--blue);}
+  .resume-opt.sel .r-ico{background:var(--blue);color:#fff;}
+  .resume-opt h4{margin:0;font-family:'Barlow Condensed';font-size:18px;}
+  .resume-opt p{font-size:12.5px;color:var(--ink-2);margin-top:2px;}
+
+  .consent{display:flex;gap:11px;align-items:flex-start;padding:13px;border:1.5px solid var(--line);border-radius:13px;margin-bottom:11px;cursor:pointer;}
+  .consent.req{border-color:#f0d9a8;background:#fffdf5;}
+  .cbox{
+    width:24px;height:24px;border-radius:7px;border:2px solid var(--ink-2);flex:none;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;transition:.12s;background:#fff;
+  }
+  .consent.on .cbox{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .consent p{font-size:13px;color:#3c4d62;}
+  .consent p b{color:var(--ink);}
+  .disclaimer{
+    background:#FFF7E6;border:1px solid #f0d9a8;border-radius:12px;padding:12px 14px;
+    font-size:12.5px;color:#7a5a10;margin-top:6px;display:flex;gap:9px;
+  }
+  .disclaimer svg{flex:none;margin-top:1px;}
+
+  /* success */
+  #success{background:linear-gradient(180deg,#11539E,#0B3B72);color:#fff;align-items:center;justify-content:center;text-align:center;}
+  .check-big{width:96px;height:96px;border-radius:50%;background:var(--hivis);display:flex;align-items:center;justify-content:center;margin-bottom:24px;animation:pop .4s ease;}
+  @keyframes pop{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+  #success h1{font-size:32px;}
+  #success p{color:#cfe0f3;margin-top:10px;max-width:260px;font-size:15px;}
+
+  /* ===== TRACKER ===== */
+  #tracker{background:var(--canvas);}
+  .track-hero{background:var(--blue);color:#fff;padding:10px 20px 20px;flex:none;}
+  .track-hero h3{font-size:22px;}
+  .track-hero .co{color:#cfe0f3;font-size:14px;margin-top:2px;}
+  .track-pct{display:flex;align-items:baseline;gap:8px;margin-top:14px;}
+  .track-pct b{font-family:'Barlow Condensed';font-size:40px;}
+  .track-pct span{color:#cfe0f3;font-size:14px;}
+  .track-eta{background:rgba(255,255,255,.14);border-radius:10px;padding:9px 12px;margin-top:12px;font-size:13px;display:flex;gap:8px;align-items:center;}
+
+  .stepper{padding:22px 20px 10px;}
+  .step{display:flex;gap:15px;position:relative;padding-bottom:6px;}
+  .step .rail{display:flex;flex-direction:column;align-items:center;flex:none;}
+  .node{
+    width:38px;height:38px;border-radius:50%;background:#fff;border:2.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:#b6c1ce;z-index:2;transition:.3s;flex:none;
+  }
+  .line{width:3px;flex:1;background:var(--line);margin:2px 0;min-height:26px;transition:.3s;}
+  .step.done .node{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .step.done .line{background:var(--blue);}
+  .step.current .node{background:var(--hivis);border-color:var(--hivis);color:#1b1300;box-shadow:0 0 0 6px rgba(255,196,0,.25);animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 5px rgba(255,196,0,.28);}50%{box-shadow:0 0 0 11px rgba(255,196,0,.06);}}
+  @media (prefers-reduced-motion:reduce){.step.current .node{animation:none;}}
+  .step-body{padding-bottom:20px;padding-top:5px;}
+  .step-body h4{margin:0;font-family:'Barlow Condensed';font-size:18px;color:#aeb9c6;transition:.3s;}
+  .step.done .step-body h4,.step.current .step-body h4{color:var(--ink);}
+  .step-body .when{font-size:12.5px;color:var(--ink-2);margin-top:2px;}
+  .step.current .step-body .badge-now{display:inline-block;background:var(--hivis);color:#1b1300;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;margin-top:6px;text-transform:uppercase;letter-spacing:.04em;}
+  .outcome{margin:6px 20px 16px;border-radius:16px;padding:18px;}
+  .outcome.offer{background:var(--green-tint);border:1.5px solid #bce6cc;}
+  .outcome.reject{background:var(--red-tint);border:1.5px solid #f0caca;}
+  .outcome h3{font-size:20px;}
+  .outcome.offer h3{color:#0f7a37;}
+  .outcome.reject h3{color:#9a3030;}
+  .outcome p{font-size:13.5px;margin-top:5px;color:#3c4d62;}
+  .reason-chip{display:inline-block;background:#fff;border:1px solid #f0caca;color:#9a3030;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;margin-top:9px;}
+  .demo-bar{margin:0 20px 18px;display:flex;gap:9px;}
+  .demo-note{text-align:center;font-size:11px;color:#9aa7b6;padding:0 20px 16px;}
+
+  /* ===== LISTS (saved / applications) ===== */
+  .list-item{
+    background:#fff;border-radius:16px;padding:15px;margin:0 16px 12px;box-shadow:var(--shadow);
+    display:flex;gap:13px;align-items:center;cursor:pointer;
+  }
+  .li-ico{width:46px;height:46px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:700;color:#fff;font-size:18px;}
+  .list-item h4{margin:0;font-family:'Barlow Condensed';font-size:18px;}
+  .list-item .sub{font-size:13px;color:var(--ink-2);margin-top:2px;}
+  .li-status{margin-left:auto;font-size:11px;font-weight:700;padding:5px 9px;border-radius:7px;text-transform:uppercase;letter-spacing:.03em;flex:none;}
+  .st-active{background:var(--blue-tint);color:var(--blue);}
+  .st-offer{background:var(--green-tint);color:#0f7a37;}
+  .empty{text-align:center;padding:60px 30px;color:var(--ink-2);}
+  .empty svg{margin-bottom:14px;}
+  .empty h3{font-size:21px;color:var(--ink);margin-bottom:6px;}
+
+  /* ===== MESSAGES ===== */
+  .msg-thread{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:#fff;}
+  .msg-thread .av{width:48px;height:48px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Barlow Condensed';font-weight:700;}
+  .msg-thread h4{margin:0;font-size:16px;font-family:'Barlow';font-weight:600;}
+  .msg-thread .preview{font-size:13.5px;color:var(--ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;}
+  .msg-thread .time{margin-left:auto;font-size:11.5px;color:#9aa7b6;flex:none;}
+  .msg-thread .unread{width:9px;height:9px;border-radius:50%;background:var(--blue);margin-left:auto;flex:none;align-self:center;}
+
+  /* ===== AI RESUME ===== */
+  #airesume{background:var(--canvas);}
+  .ai-banner{background:linear-gradient(120deg,#11539E,#1a6fc4);color:#fff;border-radius:16px;padding:16px;margin:14px 16px;}
+  .ai-banner .ai-h{display:flex;align-items:center;gap:9px;font-family:'Barlow Condensed';font-size:20px;font-weight:700;}
+  .ai-banner p{font-size:13px;color:#dce9f7;margin-top:6px;}
+  .ai-out{background:#fff;border-radius:16px;margin:0 16px 14px;padding:18px;box-shadow:var(--shadow);border:1px solid #eef1f5;}
+  .ai-out h4{font-family:'Barlow Condensed';font-size:17px;color:var(--blue);margin:14px 0 6px;}
+  .ai-out h4:first-child{margin-top:0;}
+  .ai-out p,.ai-out li{font-size:13.5px;color:#3c4d62;line-height:1.5;}
+  .ai-out ul{margin:6px 0;padding-left:18px;}
+  .typing{display:inline-block;}
+
+  /* ===== PROFILE / SETTINGS ===== */
+  #profile{background:var(--canvas);}
+  .prof-head{background:var(--blue);color:#fff;padding:18px 20px 24px;flex:none;display:flex;align-items:center;gap:14px;}
+  .prof-av{width:60px;height:60px;border-radius:18px;background:var(--hivis);color:#1b1300;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:700;font-size:26px;flex:none;}
+  .prof-head h2{font-size:24px;}
+  .prof-head .sub{color:#cfe0f3;font-size:13px;margin-top:2px;}
+  .group{margin:14px 16px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+  .group-label{font-family:'Barlow Condensed';font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);font-weight:600;margin:18px 20px 0;}
+  .row{display:flex;align-items:center;gap:13px;padding:15px 16px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .row:last-child{border-bottom:none;}
+  .row .r-ico{width:36px;height:36px;border-radius:10px;background:var(--blue-tint);color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none;}
+  .row.warn .r-ico{background:var(--red-tint);color:var(--red-soft);}
+  .row h4{margin:0;font-size:15.5px;font-family:'Barlow';font-weight:600;}
+  .row p{font-size:12px;color:var(--ink-2);margin-top:1px;}
+  .row .chev{margin-left:auto;color:#c2cdd9;flex:none;}
+  .switch{margin-left:auto;width:46px;height:27px;border-radius:14px;background:var(--line);position:relative;transition:.2s;flex:none;}
+  .switch.on{background:var(--green);}
+  .switch i{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .switch.on i{left:22px;}
+
+  /* ===== BOTTOM NAV ===== */
+  .tabbar{
+    flex:none;display:flex;background:#fff;border-top:1px solid var(--line);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .tab{
+    flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
+    align-items:center;gap:3px;color:#9aa7b6;font-family:'Barlow';font-weight:600;font-size:11px;padding:4px;
+  }
+  .tab.on{color:var(--blue);}
+  .tab .ndot{position:relative;}
+  .tab .badge-n{position:absolute;top:-4px;right:-8px;background:var(--red-soft);color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;}
+
+  /* ===== MODAL / SHEET ===== */
+  .sheet-bg{position:absolute;inset:0;background:rgba(8,18,30,.5);z-index:80;display:none;align-items:flex-end;}
+  .sheet-bg.show{display:flex;animation:fade .2s;}
+  .sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom));max-height:80%;overflow-y:auto;animation:up .26s ease;}
+  @keyframes up{from{transform:translateY(40px);}to{transform:none;}}
+  .sheet-grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 16px;}
+  .sheet h3{font-size:22px;margin-bottom:6px;}
+  .sheet p{font-size:14px;color:#3c4d62;margin-bottom:8px;}
+  .legal-note{background:var(--blue-tint);border-radius:11px;padding:12px;font-size:12px;color:var(--blue-deep);margin:12px 0;display:flex;gap:9px;}
+
+  .toast{
+    position:absolute;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;
+    z-index:90;opacity:0;transition:.25s;white-space:nowrap;box-shadow:var(--shadow-lg);pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .helper{color:var(--ink-2);font-size:13px;margin-top:4px;}
+  .center{text-align:center;}
+  .mt{margin-top:14px;}
+  .mt-s{margin-top:8px;}
+  .row-2{display:flex;gap:10px;}
+  .row-2>*{flex:1;}
+
+  /* ===== ROLE DASHBOARDS (employer / agency / admin) ===== */
+  .dash-head{padding:16px 20px 22px;color:#fff;flex:none;}
+  .dash-head.emp{background:var(--blue);}
+  .dash-head.ag{background:#0f7a37;}
+  .dash-head.admin{background:var(--ink);}
+  .dash-head .eyebrow{font-family:'Barlow Condensed';letter-spacing:.1em;text-transform:uppercase;font-size:12px;opacity:.8;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .dash-head h2{font-size:25px;margin-top:6px;}
+  .dash-head .sub{font-size:13px;opacity:.85;margin-top:3px;}
+  .verify-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;margin-top:11px;}
+  .verify-pill.ok{background:rgba(21,163,74,.9);}
+  .verify-pill.pending{background:rgba(255,196,0,.95);color:#1b1300;}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:14px 16px;}
+  .stat-card{background:#fff;border-radius:15px;padding:15px;box-shadow:var(--shadow);}
+  .stat-card b{font-family:'Barlow Condensed';font-size:30px;display:block;color:var(--ink);line-height:1;}
+  .stat-card span{font-size:12.5px;color:var(--ink-2);font-weight:600;}
+  .stat-card.accent{background:var(--blue);}
+  .stat-card.accent b,.stat-card.accent span{color:#fff;}
+  .stat-card.accent.ag{background:#0f7a37;}
+
+  .cta-strip{margin:4px 16px 14px;display:flex;gap:10px;}
+  .post-fab{position:absolute;right:18px;bottom:84px;width:58px;height:58px;border-radius:18px;background:var(--hivis);color:#1b1300;border:none;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);cursor:pointer;z-index:40;}
+
+  /* segmented control */
+  .seg{display:flex;background:#e7edf3;border-radius:12px;padding:3px;margin:14px 16px 4px;}
+  .seg button{flex:1;border:none;background:transparent;font-family:'Barlow';font-weight:600;font-size:13.5px;color:var(--ink-2);padding:9px 6px;border-radius:9px;cursor:pointer;}
+  .seg button.on{background:#fff;color:var(--blue);box-shadow:var(--shadow);}
+  .seg.ag button.on{color:#0f7a37;}
+
+  /* employer/agency job card */
+  .mgr-card{background:#fff;border-radius:16px;padding:15px;margin:0 16px 12px;box-shadow:var(--shadow);cursor:pointer;border:1px solid #eef1f5;}
+  .mgr-card .top{display:flex;align-items:flex-start;gap:10px;}
+  .mgr-card h3{font-size:19px;}
+  .mgr-card .co{font-size:13px;color:var(--ink-2);margin-top:2px;}
+  .status-dot{font-size:11px;font-weight:700;border-radius:7px;padding:4px 9px;text-transform:uppercase;letter-spacing:.03em;margin-left:auto;flex:none;}
+  .sd-active{background:var(--green-tint);color:#0f7a37;}
+  .sd-paused{background:#FFF3D1;color:#9a6a00;}
+  .sd-pending{background:var(--blue-tint);color:var(--blue);}
+  .sd-closed{background:#eef1f5;color:#7a8896;}
+  .mgr-stats{display:flex;gap:18px;margin-top:13px;padding-top:13px;border-top:1px solid var(--line);}
+  .mgr-stats div{display:flex;flex-direction:column;}
+  .mgr-stats b{font-family:'Barlow Condensed';font-size:22px;color:var(--ink);line-height:1;}
+  .mgr-stats small{font-size:11px;color:var(--ink-2);font-weight:600;margin-top:2px;}
+
+  /* applicant pipeline */
+  .pipe-tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 6px;flex:none;}
+  .pipe-tabs::-webkit-scrollbar{height:0;}
+  .pipe-tab{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px;}
+  .pipe-tab.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .pipe-tab.on.ag{background:#0f7a37;border-color:#0f7a37;}
+  .pipe-tab .cnt{background:rgba(0,0,0,.12);border-radius:8px;padding:0 6px;font-size:11px;}
+  .pipe-tab.on .cnt{background:rgba(255,255,255,.25);}
+
+  .app-card{background:#fff;border-radius:15px;padding:14px;margin:0 16px 11px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:12px;align-items:center;border:1px solid #eef1f5;}
+  .app-av{width:46px;height:46px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Barlow Condensed';font-weight:700;font-size:17px;}
+  .app-card h4{margin:0;font-family:'Barlow Condensed';font-size:18px;}
+  .app-card .meta{font-size:12.5px;color:var(--ink-2);margin-top:2px;}
+  .app-card .match{margin-top:5px;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--blue);background:var(--blue-tint);padding:3px 8px;border-radius:6px;}
+  .app-stage{margin-left:auto;flex:none;text-align:right;}
+  .app-stage .s-label{font-size:11px;font-weight:700;color:var(--ink-2);}
+  .assigned{font-size:11px;color:#0f7a37;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:4px;justify-content:flex-end;}
+
+  /* applicant detail */
+  .doc-tab{display:flex;gap:8px;margin:14px 0 4px;}
+  .doc-tab button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:11px;font-family:'Barlow';font-weight:600;font-size:14px;color:var(--ink-2);cursor:pointer;}
+  .doc-tab button.on{border-color:var(--blue);background:var(--blue-tint);color:var(--blue);}
+  .doc-view{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13.5px;color:#3c4d62;line-height:1.55;}
+  .doc-view h5{font-family:'Barlow Condensed';font-size:16px;color:var(--blue);margin:12px 0 5px;}
+  .doc-view h5:first-child{margin-top:0;}
+  .stage-picker{display:flex;flex-wrap:wrap;gap:8px;}
+  .stage-opt{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .stage-opt.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .stage-opt.danger.on{background:var(--red-soft);border-color:var(--red-soft);}
+
+  .agree-box{background:#fffdf5;border:1.5px solid #f0d9a8;border-radius:14px;padding:15px;margin-bottom:12px;}
+  .agree-box h4{font-family:'Barlow Condensed';font-size:17px;margin-bottom:6px;}
+  .agree-box p{font-size:13px;color:#7a5a10;}
+
+  .note-internal{background:#FFFBEA;border:1px dashed #e3c878;border-radius:12px;padding:12px;font-size:12.5px;color:#7a5a10;}
+  .note-internal .lbl{font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.06em;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+
+  /* admin */
+  .mod-card{background:#fff;border-radius:14px;padding:14px;margin:0 16px 11px;box-shadow:var(--shadow);border:1px solid #eef1f5;}
+  .mod-card .top{display:flex;align-items:center;gap:10px;}
+  .mod-card h4{margin:0;font-family:'Barlow Condensed';font-size:17px;}
+  .mod-card .meta{font-size:12px;color:var(--ink-2);margin-top:2px;}
+  .flag-tag{background:var(--red-tint);color:var(--red-soft);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;}
+  .mod-actions{display:flex;gap:8px;margin-top:12px;}
+  .mini-btn{flex:1;border:none;border-radius:10px;padding:10px;font-family:'Barlow';font-weight:600;font-size:13px;cursor:pointer;}
+  .mb-approve{background:var(--green-tint);color:#0f7a37;}
+  .mb-reject{background:var(--red-tint);color:var(--red-soft);}
+  .mb-neutral{background:#eef1f5;color:#42536a;}
+  .log-row{display:flex;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);background:#fff;}
+  .log-row .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;}
+  .log-row .lt{font-size:13.5px;color:var(--ink);font-weight:600;}
+  .log-row .lm{font-size:12px;color:var(--ink-2);margin-top:2px;}
+  .log-row .time{margin-left:auto;font-size:11px;color:#9aa7b6;flex:none;}
+
+  /* documents (job seeker) */
+  .doc-item{background:#fff;border-radius:15px;padding:15px;margin:0 16px 11px;box-shadow:var(--shadow);display:flex;gap:13px;align-items:center;cursor:pointer;border:1px solid #eef1f5;}
+  .doc-item .d-ico{width:46px;height:46px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;}
+  .doc-item h4{margin:0;font-family:'Barlow';font-weight:600;font-size:15.5px;}
+  .doc-item .d-sub{font-size:12.5px;color:var(--ink-2);margin-top:2px;}
+  .add-doc{border:1.5px dashed #c2cdd9;background:#fafcfe;border-radius:15px;padding:15px;margin:0 16px 11px;display:flex;gap:13px;align-items:center;cursor:pointer;color:var(--blue);font-weight:600;}
+
+  select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235A6B7E' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="stage-tag"><b>Local Job Listings USA</b> — Job Seeker Prototype · tap to explore</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen-area" id="area">
+
+      <!-- STATUS BAR -->
+      <div class="statusbar" id="statusbar">
+        <span id="clock">9:41</span>
+        <span class="sb-icons">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="1" width="3" height="11" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1" opacity=".4"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.5c2.1 0 4 .8 5.4 2.1l1.1-1.2C13 1.8 10.6.8 8 .8S3 1.8 1.5 3.4l1.1 1.2C4 3.3 5.9 2.5 8 2.5z"/><path d="M8 6c1 0 2 .4 2.7 1.1l1.1-1.2C10.8 4.9 9.5 4.3 8 4.3s-2.8.6-3.8 1.6l1.1 1.2C6 6.4 7 6 8 6z"/><circle cx="8" cy="9.5" r="1.6"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="currentColor" stroke-width="1" opacity=".5"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.3" fill="currentColor"/><rect x="22.5" y="4" width="1.5" height="4" rx="1" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+
+      <!-- ============ SPLASH ============ -->
+      <section class="screen active" id="splash">
+        <div class="logo-mark">
+          <span>LJ</span>
+        </div>
+        <h1>Local Job Listings<br><span class="usa">USA</span></h1>
+        <p>Real local jobs near you. Apply fast. Track every step.</p>
+        <div class="splash-stats">
+          <div><b>14,200+</b><small>Listings</small></div>
+          <div><b>3,800+</b><small>Employers</small></div>
+          <div><b>50</b><small>States</small></div>
+        </div>
+        <div class="pad" style="width:100%;">
+          <button class="btn btn-hivis" onclick="go('onboard')">Get started</button>
+          <button class="btn btn-ghost mt-s" style="background:transparent;border-color:rgba(255,255,255,.3);color:#fff" onclick="go('onboard')">I already have an account</button>
+        </div>
+      </section>
+
+      <!-- ============ ONBOARDING ============ -->
+      <section class="screen" id="onboard">
+        <div class="scroll">
+          <div class="ob-head">
+            <h1 style="font-size:30px">Welcome 👋<br>How will you use the app?</h1>
+            <p class="helper mt-s">You can switch roles later in settings.</p>
+          </div>
+          <div class="pad">
+            <button class="role-card seeker" onclick="go('signup')">
+              <div class="role-ico">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#11539E" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+              </div>
+              <div>
+                <h3>I'm looking for work</h3>
+                <p>Find local jobs, apply fast, track status</p>
+              </div>
+              <span class="chev">›</span>
+            </button>
+
+            <button class="role-card employer" onclick="setRole('employer');go('emp-signup')">
+              <div class="role-ico">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9a6a00" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </div>
+              <div>
+                <h3>I'm an employer</h3>
+                <p>Post jobs and find local applicants</p>
+              </div>
+              <span class="chev">›</span>
+            </button>
+
+            <button class="role-card agency" onclick="setRole('agency');go('ag-signup')">
+              <div class="role-ico">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0f7a37" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5M15 20c0-2 1-3.4 3-3.4s3 1.4 3 3.4"/></svg>
+              </div>
+              <div>
+                <h3>I'm a staffing agency</h3>
+                <p>Manage multiple jobs and recruiter seats</p>
+              </div>
+              <span class="chev">›</span>
+            </button>
+
+            <div class="disclaimer mt">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span>Local Job Listings USA is a job listing & matching platform. Applying does not guarantee a job, interview, or employer contact. Employers make all hiring decisions.</span>
+            </div>
+            <button class="btn btn-ghost mt" style="font-size:14px;color:var(--ink-2)" onclick="setRole('admin');go('admin-dash')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+              Local Job Listings staff sign in
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SIGNUP ============ -->
+      <section class="screen" id="signup">
+        <div class="appbar"><button class="back" onclick="go('onboard')">‹</button><h2>Create account</h2></div>
+        <div class="scroll">
+          <div class="pad">
+            <div class="field"><label>Full name</label><input class="input" value="Marcus Reed" /></div>
+            <div class="field"><label>Email</label><input class="input" value="marcus.reed@email.com" /></div>
+            <div class="field"><label>Mobile number</label><input class="input" value="(312) 555-0148" /></div>
+            <div class="field"><label>Create password</label><input class="input" type="password" value="········" /></div>
+
+            <div class="consent on req" onclick="toggleC(this)" style="margin-top:6px">
+              <div class="cbox">✓</div>
+              <p><b>I agree</b> to the Terms & Conditions and Privacy Policy. <span style="color:var(--blue)">(required)</span></p>
+            </div>
+            <div class="consent" onclick="toggleC(this)">
+              <div class="cbox">✓</div>
+              <p>Text me job matches & application updates by SMS. Msg & data rates may apply. <b>Consent is not required</b> to use the app. Reply STOP to opt out. <span style="color:var(--blue)">(TCPA)</span></p>
+            </div>
+
+            <button class="btn btn-primary mt" onclick="go('search')">Create account</button>
+            <p class="helper center mt-s">By continuing you confirm you're 18+ and authorized to work in the US.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SEARCH SETUP ============ -->
+      <section class="screen" id="search">
+        <div class="appbar"><button class="back" onclick="go('onboard')">‹</button><h2>Find jobs near you</h2></div>
+        <div class="scroll">
+          <div class="pad">
+            <div class="field">
+              <label>Your location</label>
+              <input class="input" id="locInput" value="Chicago, IL 60616" />
+            </div>
+
+            <div class="blk-label">Search radius</div>
+            <div class="range-row">
+              <input type="range" min="5" max="60" value="25" step="5" id="radius" oninput="document.getElementById('radVal').firstChild.textContent=this.value">
+              <div class="radius-val" id="radVal">25<small>&nbsp;mi</small></div>
+            </div>
+
+            <div class="blk-label">Pay range (per hour)</div>
+            <input type="range" min="15" max="50" value="20" step="1" id="payMin" oninput="updatePay()">
+            <input type="range" min="15" max="50" value="40" step="1" id="payMax" oninput="updatePay()" style="margin-top:-4px">
+            <div class="pay-readout"><span id="payLow">$20/hr</span><span id="payHigh">$40/hr</span></div>
+
+            <div class="blk-label">Job type</div>
+            <div class="chips" data-group="type">
+              <div class="chip on" onclick="tc(this)">Full-time</div>
+              <div class="chip" onclick="tc(this)">Part-time</div>
+              <div class="chip" onclick="tc(this)">Temp-to-hire</div>
+              <div class="chip" onclick="tc(this)">Contract</div>
+              <div class="chip" onclick="tc(this)">Direct hire</div>
+            </div>
+
+            <div class="blk-label">Shift</div>
+            <div class="chips" data-group="shift">
+              <div class="chip on amber" onclick="tc(this)">1st shift</div>
+              <div class="chip" onclick="tc(this)">2nd shift</div>
+              <div class="chip" onclick="tc(this)">3rd shift</div>
+              <div class="chip" onclick="tc(this)">Weekend</div>
+              <div class="chip" onclick="tc(this)">Flexible</div>
+            </div>
+
+            <div class="blk-label">Categories</div>
+            <div class="chips" data-group="cat">
+              <div class="chip on" onclick="tc(this)">Industrial</div>
+              <div class="chip" onclick="tc(this)">Healthcare</div>
+              <div class="chip on" onclick="tc(this)">Skilled Trades</div>
+              <div class="chip" onclick="tc(this)">Logistics</div>
+              <div class="chip" onclick="tc(this)">Warehouse</div>
+              <div class="chip" onclick="tc(this)">Manufacturing</div>
+              <div class="chip" onclick="tc(this)">Office/Admin</div>
+              <div class="chip" onclick="tc(this)">Customer Service</div>
+            </div>
+          </div>
+        </div>
+        <div class="sticky-apply">
+          <button class="btn btn-primary" onclick="go('feed')">Show local jobs</button>
+        </div>
+      </section>
+
+      <!-- ============ JOB FEED ============ -->
+      <section class="screen" id="feed">
+        <div class="feed-top">
+          <button class="loc-pill" onclick="go('search')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            Chicago, IL · 25 mi
+            <span style="opacity:.7">▾</span>
+          </button>
+          <div class="feed-h">
+            <h2 id="feedCount">38 local jobs</h2>
+            <div class="toggle">
+              <button class="on" id="tList" onclick="setView('list')">List</button>
+              <button id="tMap" onclick="setView('map')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+                Map
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="fpill active" onclick="toast('Filters open in setup')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M6 12h12M10 19h4"/></svg> Filters</div>
+          <div class="fpill" onclick="toast('Sorted by newest')">Newest</div>
+          <div class="fpill" onclick="toast('Sorted by pay')">Top pay</div>
+          <div class="fpill" onclick="toast('Showing urgent only')">🔥 Urgent</div>
+          <div class="fpill" onclick="toast('Showing featured')">⭐ Featured</div>
+        </div>
+        <div class="scroll" id="feedList"><!-- cards injected --></div>
+        <div class="tabbar" id="nav-feed"></div>
+      </section>
+
+      <!-- ============ MAP ============ -->
+      <section class="screen" id="map-screen">
+        <div class="feed-top">
+          <button class="loc-pill" onclick="go('search')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            Chicago, IL · 25 mi
+          </button>
+          <div class="feed-h">
+            <h2>Map view</h2>
+            <div class="toggle">
+              <button id="tList2" onclick="setView('list')">List</button>
+              <button class="on" id="tMap2" onclick="setView('map')">Map</button>
+            </div>
+          </div>
+        </div>
+        <div class="map-canvas" id="mapCanvas">
+          <div class="road" style="top:30%;left:0;right:0;height:6px;"></div>
+          <div class="road" style="top:62%;left:0;right:0;height:5px;"></div>
+          <div class="road" style="left:38%;top:0;bottom:0;width:6px;"></div>
+          <div class="road" style="left:72%;top:0;bottom:0;width:5px;"></div>
+          <div class="radius-ring"></div>
+          <div class="me-dot"></div>
+          <!-- pins injected -->
+          <div class="map-card" id="mapCard"></div>
+        </div>
+        <div class="tabbar" id="nav-map"></div>
+      </section>
+
+      <!-- ============ JOB DETAIL ============ -->
+      <section class="screen" id="detail">
+        <div class="detail-hero">
+          <div class="appbar" style="padding:6px 0 10px"><button class="back" onclick="back()">‹</button></div>
+          <div id="detailHero"></div>
+        </div>
+        <div class="scroll" id="detailBody"></div>
+        <div class="sticky-apply">
+          <button class="save-btn" id="detailSave" onclick="toggleSaveDetail()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18l7-5 7 5V3z"/></svg>
+          </button>
+          <button class="btn btn-hivis" onclick="startApply()">Apply now</button>
+        </div>
+      </section>
+
+      <!-- ============ APPLY FLOW ============ -->
+      <section class="screen" id="apply">
+        <div class="appbar"><button class="back" id="applyBack" onclick="applyPrev()">‹</button><h2 id="applyTitle">Quick apply</h2></div>
+        <div class="step-dots" id="stepDots"><i class="on"></i><i></i><i></i></div>
+        <div class="scroll">
+          <div class="pad">
+            <!-- Step 1: documents -->
+            <div class="apply-step active" data-step="0">
+              <h1 style="font-size:25px;margin-bottom:4px">Your documents</h1>
+              <p class="helper" style="margin-bottom:16px">Attach what you'd like the employer to see.</p>
+
+              <div class="blk-label" style="margin-top:0">Resume <span style="color:var(--red-soft)">*</span></div>
+              <div class="resume-opt sel" onclick="selResume(this,'upload')">
+                <div class="r-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div>
+                <div><h4>Use my saved resume</h4><p>Marcus_Reed_Resume.pdf · uploaded May 2</p></div>
+              </div>
+              <div class="resume-opt" onclick="selResume(this,'new')">
+                <div class="r-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                <div><h4>Upload a new file</h4><p>PDF, DOC, or photo of your resume</p></div>
+              </div>
+              <div class="resume-opt" onclick="goAI()">
+                <div class="r-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg></div>
+                <div><h4>Build one with AI</h4><p>Answer a few questions, we draft it</p></div>
+              </div>
+
+              <div class="blk-label">Cover letter <span class="helper" style="font-weight:500">(optional)</span></div>
+              <div class="resume-opt" id="clOptNone" onclick="selCover(this,'none')">
+                <div class="r-ico" style="background:#eef1f5;color:#7a8896"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+                <div><h4>No cover letter</h4><p>Apply with resume only</p></div>
+              </div>
+              <div class="resume-opt sel" id="clOptAI" onclick="selCover(this,'ai')">
+                <div class="r-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg></div>
+                <div><h4 id="clAItitle">Write one with AI for this job</h4><p id="clAIsub">Tailored to this role · takes 10 seconds</p></div>
+              </div>
+              <div class="resume-opt" onclick="selCover(this,'saved')">
+                <div class="r-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div>
+                <div><h4>Attach a saved cover letter</h4><p>From My Documents</p></div>
+              </div>
+
+              <div class="blk-label">Short note to employer <span class="helper" style="font-weight:500">(optional)</span></div>
+              <textarea class="input" id="applyNote" placeholder="e.g. I live 5 minutes away and can start this week."></textarea>
+            </div>
+
+            <!-- Step 2: questions -->
+            <div class="apply-step" data-step="1">
+              <h1 style="font-size:25px;margin-bottom:4px">A few quick questions</h1>
+              <p class="helper" style="margin-bottom:16px">Set by the employer.</p>
+              <div class="field"><label>Are you authorized to work in the US?</label>
+                <div class="chips"><div class="chip on" onclick="tcOne(this)">Yes</div><div class="chip" onclick="tcOne(this)">No</div></div>
+              </div>
+              <div class="field" style="margin-top:14px"><label>Can you work 1st shift (6am–2pm)?</label>
+                <div class="chips"><div class="chip on" onclick="tcOne(this)">Yes</div><div class="chip" onclick="tcOne(this)">Some days</div><div class="chip" onclick="tcOne(this)">No</div></div>
+              </div>
+              <div class="field" style="margin-top:14px"><label>Years of forklift / warehouse experience</label>
+                <div class="chips"><div class="chip" onclick="tcOne(this)">None</div><div class="chip on" onclick="tcOne(this)">1–2 yrs</div><div class="chip" onclick="tcOne(this)">3–5 yrs</div><div class="chip" onclick="tcOne(this)">5+ yrs</div></div>
+              </div>
+              <div class="field" style="margin-top:14px"><label>Anything you'd like to add? (optional)</label>
+                <textarea class="input" placeholder="Certifications, availability, etc."></textarea>
+              </div>
+            </div>
+
+            <!-- Step 3: consent -->
+            <div class="apply-step" data-step="2">
+              <h1 style="font-size:25px;margin-bottom:4px">Review & submit</h1>
+              <p class="helper" style="margin-bottom:16px">Confirm what you're sharing.</p>
+
+              <div class="consent on req" onclick="toggleC(this)">
+                <div class="cbox">✓</div>
+                <p><b>Share my resume & contact info</b> with this employer and its staffing partners so they can consider my application. <span style="color:var(--blue)">(required to apply)</span></p>
+              </div>
+              <div class="consent on req" onclick="toggleC(this)">
+                <div class="cbox">✓</div>
+                <p>I understand my application is reviewed by the <b>employer</b>, who makes all hiring decisions. <span style="color:var(--blue)">(required)</span></p>
+              </div>
+              <div class="consent" onclick="toggleC(this)">
+                <div class="cbox">✓</div>
+                <p>Send me SMS updates about this application. <b>Optional.</b> Msg & data rates may apply. Reply STOP to opt out.</p>
+              </div>
+
+              <div class="disclaimer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span>Submitting this application does <b>not</b> guarantee a job, interview, or employer contact. AI-assisted recommendations may be used; final hiring decisions are made by employers.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sticky-apply">
+          <button class="btn btn-primary" id="applyNext" onclick="applyNext()">Continue</button>
+        </div>
+      </section>
+
+      <!-- ============ SUCCESS ============ -->
+      <section class="screen" id="success">
+        <div class="check-big">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1b1300" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+        </div>
+        <h1>Application sent!</h1>
+        <p id="successMsg">Your application to the Forklift Operator role is in. We'll keep you posted at every step.</p>
+        <div class="pad" style="width:100%">
+          <button class="btn btn-hivis" onclick="go('tracker')">Track my application</button>
+          <button class="btn btn-ghost mt-s" style="background:transparent;border-color:rgba(255,255,255,.3);color:#fff" onclick="go('feed')">Keep browsing jobs</button>
+        </div>
+      </section>
+
+      <!-- ============ TRACKER ============ -->
+      <section class="screen" id="tracker">
+        <div class="track-hero">
+          <div class="appbar" style="padding:4px 0 6px;color:#fff"><button class="back" onclick="go('apps')">‹</button><h2 style="font-size:21px">Application status</h2></div>
+          <h3 id="trackTitle">Forklift Operator — Cherry Picker</h3>
+          <div class="co" id="trackCo">Distribution Center · Chicago, IL</div>
+          <div class="track-pct"><b id="trackPct">35%</b><span>complete</span></div>
+          <div class="track-eta">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span id="trackEta">Most employers respond within 48 hours.</span>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="stepper" id="stepper"></div>
+          <div id="outcomeWrap"></div>
+          <div class="demo-bar">
+            <button class="btn btn-ghost" style="font-size:14px;padding:11px" onclick="advanceStage()">▶ Advance status (demo)</button>
+            <button class="btn btn-ghost" style="font-size:14px;padding:11px;flex:.6" onclick="resetStage()">↺ Reset</button>
+          </div>
+          <p class="demo-note">Demo controls — in the real app, employers move you through these stages and you get a push/SMS update each time.</p>
+        </div>
+        <div class="tabbar" id="nav-tracker"></div>
+      </section>
+
+      <!-- ============ SAVED / APPLICATIONS LIST (Tracker tab landing) ============ -->
+      <section class="screen" id="apps">
+        <div class="appbar blue"><h2>My applications</h2></div>
+        <div class="scroll" id="appsList"></div>
+        <div class="tabbar" id="nav-apps"></div>
+      </section>
+
+      <!-- ============ SAVED ============ -->
+      <section class="screen" id="saved">
+        <div class="appbar blue"><h2>Saved jobs</h2></div>
+        <div class="scroll" id="savedList"></div>
+        <div class="tabbar" id="nav-saved"></div>
+      </section>
+
+      <!-- ============ MESSAGES ============ -->
+      <section class="screen" id="messages">
+        <div class="appbar blue"><h2>Messages</h2></div>
+        <div class="scroll">
+          <div class="msg-thread" onclick="toast('Opens chat thread')">
+            <div class="av" style="background:#11539E">DC</div>
+            <div><h4>Distribution Center</h4><div class="preview">Thanks for applying! We'd like to set up…</div></div>
+            <div class="unread"></div>
+          </div>
+          <div class="msg-thread" onclick="toast('Opens chat thread')">
+            <div class="av" style="background:#0f7a37">RH</div>
+            <div><h4>Regional Hospital Network</h4><div class="preview">Your application is in review.</div></div>
+            <div class="time">2h</div>
+          </div>
+          <div class="msg-thread" onclick="toast('Opens chat thread')">
+            <div class="av" style="background:#9a6a00">FS</div>
+            <div><h4>Fabrication Shop</h4><div class="preview">Position has been filled — thank you.</div></div>
+            <div class="time">1d</div>
+          </div>
+          <div class="legal-note" style="margin:16px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0B3B72" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg>
+            <span>Messages are between you and employers. Never share bank info or pay to apply — report suspicious messages.</span>
+          </div>
+        </div>
+        <div class="tabbar" id="nav-messages"></div>
+      </section>
+
+      <!-- ============ AI RESUME ============ -->
+      <section class="screen" id="airesume">
+        <div class="appbar"><button class="back" onclick="go('apply')">‹</button><h2>AI resume builder</h2></div>
+        <div class="scroll">
+          <div class="ai-banner">
+            <div class="ai-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg> Let's build your resume</div>
+            <p>Answer a few questions and we'll draft a clean, employer-ready resume in seconds.</p>
+          </div>
+          <div class="pad" id="aiForm" style="padding-top:4px">
+            <div class="field"><label>Most recent job title</label><input class="input" id="aiTitle" value="Warehouse Associate" /></div>
+            <div class="field"><label>Years of experience</label><input class="input" id="aiYears" value="3" /></div>
+            <div class="field"><label>Key skills (comma separated)</label><input class="input" id="aiSkills" value="Forklift, cherry picker, RF scanner, pallet jack, inventory" /></div>
+            <div class="field"><label>Certifications / licenses</label><input class="input" id="aiCerts" value="OSHA forklift certified" /></div>
+            <button class="btn btn-primary" onclick="genResume()">✨ Generate resume</button>
+            <p class="ai-disc center mt-s">AI-assisted. You can edit everything before saving. Final hiring decisions are made by employers.</p>
+          </div>
+          <div id="aiResult" style="display:none">
+            <div class="ai-out" id="aiOut"></div>
+            <div class="pad" style="padding-top:0">
+              <button class="btn btn-hivis" onclick="saveResume()">Save & use this resume</button>
+              <button class="btn btn-ghost mt-s" onclick="document.getElementById('aiResult').style.display='none';document.getElementById('aiForm').style.display='block'">Edit answers</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PROFILE / SETTINGS ============ -->
+      <section class="screen" id="profile">
+        <div class="prof-head">
+          <div class="prof-av">MR</div>
+          <div><h2>Marcus Reed</h2><div class="sub">Chicago, IL · Skilled Trades · Industrial</div></div>
+        </div>
+        <div class="scroll">
+          <div class="group-label">My profile</div>
+          <div class="group">
+            <div class="row" onclick="toast('Opens profile editor')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg></div><div><h4>Edit profile</h4><p>Name, location, job preferences</p></div><span class="chev">›</span></div>
+            <div class="row" onclick="toast('Resume: Marcus_Reed_Resume.pdf')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div><div><h4>My resume</h4><p>Marcus_Reed_Resume.pdf</p></div><span class="chev">›</span></div>
+            <div class="row" onclick="go('airesume')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg></div><div><h4>AI resume builder</h4><p>Create or improve your resume</p></div><span class="chev">›</span></div>
+            <div class="row" onclick="openCover('')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><h4>AI cover letter</h4><p>Draft a job-specific letter</p></div><span class="chev">›</span></div>
+            <div class="row" onclick="go('docs')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h10l6 6v10a0 0 0 0 1 0 0H4z"/><path d="M14 4v6h6"/></svg></div><div><h4>My Documents</h4><p>Resume, cover letters & history</p></div><span class="chev">›</span></div>
+          </div>
+
+          <div class="group-label">Notifications & consent</div>
+          <div class="group">
+            <div class="row"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg></div><div><h4>SMS updates (TCPA)</h4><p>Texts about your applications</p></div><div class="switch on" onclick="tsw(this)"><i></i></div></div>
+            <div class="row"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div><div><h4>Email job matches</h4><p>New local jobs that fit you</p></div><div class="switch on" onclick="tsw(this)"><i></i></div></div>
+            <div class="row"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-2-2"/></svg></div><div><h4>Share resume with partners</h4><p>Let matched employers see your resume</p></div><div class="switch on" onclick="tsw(this)"><i></i></div></div>
+          </div>
+
+          <div class="group-label">Privacy & legal</div>
+          <div class="group">
+            <div class="row" onclick="sheet('privacy')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg></div><div><h4>Privacy Policy</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('terms')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div><div><h4>Terms & Conditions</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('cookies')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1"/><circle cx="14" cy="14" r="1"/><circle cx="15" cy="9" r="1"/></svg></div><div><h4>Cookie & tracking preferences</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('dns')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M5 5l14 14"/></svg></div><div><h4>Do Not Sell or Share My Info</h4><p>California & other state privacy rights</p></div><span class="chev">›</span></div>
+          </div>
+
+          <div class="group-label">Data</div>
+          <div class="group">
+            <div class="row" onclick="sheet('download')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 11l5 4 5-4M5 21h14"/></svg></div><div><h4>Download my data</h4></div><span class="chev">›</span></div>
+            <div class="row warn" onclick="sheet('delete')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div><div><h4>Delete my account & data</h4></div><span class="chev">›</span></div>
+          </div>
+          <div class="group-label">Demo</div>
+          <div class="group">
+            <div class="row" onclick="go('onboard')"><div class="r-ico" style="background:#FFF4D6;color:#9a6a00"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></div><div><h4>Switch account type</h4><p>Jump to Employer, Agency or Admin</p></div><span class="chev">›</span></div>
+          </div>
+          <p class="demo-note" style="padding:8px 24px 24px">Local Job Listings USA · v0.1 prototype<br>This is a job listing & matching platform. No job, interview, or employment is guaranteed.</p>
+        </div>
+        <div class="tabbar" id="nav-profile"></div>
+      </section>
+
+      <!-- ============================================================
+           JOB SEEKER — MY DOCUMENTS
+      ============================================================ -->
+      <section class="screen" id="docs">
+        <div class="appbar blue"><button class="back" onclick="go('profile')">‹</button><h2>My Documents</h2></div>
+        <div class="seg" id="docSeg">
+          <button class="on" onclick="docTab(0,this)">Resume</button>
+          <button onclick="docTab(1,this)">Cover Letters</button>
+          <button onclick="docTab(2,this)">History</button>
+        </div>
+        <div class="scroll" id="docsBody" style="padding-top:6px"></div>
+      </section>
+
+      <!-- ============================================================
+           JOB SEEKER — AI COVER LETTER
+      ============================================================ -->
+      <section class="screen" id="coverletter">
+        <div class="appbar"><button class="back" id="clBack" onclick="go('docs')">‹</button><h2>AI cover letter</h2></div>
+        <div class="scroll">
+          <div class="ai-banner">
+            <div class="ai-h"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> A letter made for this job</div>
+            <p>Tell us the role and we'll draft a short, friendly letter using your profile. You can edit every word before it's sent.</p>
+          </div>
+          <div class="pad" id="clForm" style="padding-top:4px">
+            <div class="field"><label>Job title</label><input class="input" id="clTitle" placeholder="e.g. Forklift Operator" /></div>
+            <div class="field"><label>Company name <span class="helper" style="font-weight:500">(if you know it)</span></label><input class="input" id="clCompany" placeholder="e.g. Distribution Center" /></div>
+            <div class="field"><label>Anything to highlight? <span class="helper" style="font-weight:500">(optional)</span></label><input class="input" id="clHighlight" placeholder="e.g. I live nearby and can start immediately" /></div>
+            <button class="btn btn-primary" onclick="genCover()">✨ Generate cover letter</button>
+            <p class="ai-disc center mt-s">AI can help draft your documents, but you should review before submitting. Final hiring decisions are made by employers.</p>
+          </div>
+          <div id="clResult" style="display:none">
+            <div class="pad" style="padding-top:4px">
+              <p class="helper" style="margin-bottom:8px">Tap the text to edit it.</p>
+              <div class="doc-view" id="clOut" contenteditable="true" style="min-height:240px;outline:none"></div>
+              <button class="btn btn-hivis mt" onclick="saveCover()">Save cover letter</button>
+              <button class="btn btn-ghost mt-s" onclick="document.getElementById('clResult').style.display='none';document.getElementById('clForm').style.display='block'">Start over</button>
+              <div class="disclaimer mt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>AI can help draft your documents, but you should review before submitting.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           EMPLOYER — SIGNUP
+      ============================================================ -->
+      <section class="screen" id="emp-signup">
+        <div class="appbar"><button class="back" onclick="go('onboard')">‹</button><h2>Employer signup</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>Company name</label><input class="input" value="Lakeside Distribution" /></div>
+          <div class="field"><label>Your name</label><input class="input" value="Dana Whitfield" /></div>
+          <div class="field"><label>Work email</label><input class="input" value="dana@lakesidedist.com" /></div>
+          <div class="field"><label>Work phone</label><input class="input" value="(312) 555-0190" /></div>
+          <div class="field"><label>Create password</label><input class="input" type="password" value="········" /></div>
+
+          <div class="agree-box">
+            <h4>Equal opportunity commitment</h4>
+            <p>Before posting, all employers agree to our non-discrimination policy.</p>
+            <div class="consent on req" onclick="toggleC(this)" style="background:#fff;margin-top:10px">
+              <div class="cbox">✓</div>
+              <p>I agree <b>not to discriminate</b> based on race, color, religion, sex, national origin, age, disability, genetic information, or any other protected characteristic. <span style="color:var(--blue)">(required)</span></p>
+            </div>
+          </div>
+          <div class="consent on req" onclick="toggleC(this)"><div class="cbox">✓</div><p><b>I agree</b> to the Terms & Conditions and Privacy Policy. <span style="color:var(--blue)">(required)</span></p></div>
+          <div class="consent" onclick="toggleC(this)"><div class="cbox">✓</div><p>Text me about applicants and account alerts. Optional. Msg & data rates may apply. <span style="color:var(--blue)">(TCPA)</span></p></div>
+
+          <button class="btn btn-primary mt" onclick="go('emp-profile')">Continue</button>
+        </div></div>
+      </section>
+
+      <!-- EMPLOYER — COMPANY PROFILE + VERIFICATION -->
+      <section class="screen" id="emp-profile">
+        <div class="appbar"><button class="back" onclick="go('emp-signup')">‹</button><h2>Company profile</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>Company logo</label>
+            <div class="add-doc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Upload logo (optional)</div>
+          </div>
+          <div class="field"><label>Industry</label>
+            <select class="input"><option>Logistics & Warehousing</option><option>Manufacturing</option><option>Healthcare</option><option>Skilled Trades</option><option>Office / Admin</option></select>
+          </div>
+          <div class="field"><label>Company size</label>
+            <select class="input"><option>1–10</option><option selected>11–50</option><option>51–200</option><option>200+</option></select>
+          </div>
+          <div class="field"><label>Headquarters city / state</label><input class="input" value="Chicago, IL" /></div>
+          <div class="field"><label>About the company</label><textarea class="input">Family-owned distribution center serving the Chicago metro. We hire reliable people and promote from within.</textarea></div>
+
+          <div class="agree-box" style="background:var(--blue-tint);border-color:#bcd4ee">
+            <h4 style="color:var(--blue-deep)">Business verification</h4>
+            <p style="color:var(--blue-deep)">We'll verify your business email and (optionally) EIN before your jobs go live. This protects job seekers from scams.</p>
+            <div class="verify-pill pending" style="margin-top:10px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1b1300" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Verification pending — placeholder</div>
+          </div>
+
+          <button class="btn btn-primary" onclick="go('emp-dash')">Create company profile</button>
+        </div></div>
+      </section>
+
+      <!-- EMPLOYER — DASHBOARD -->
+      <section class="screen" id="emp-dash">
+        <div class="dash-head emp">
+          <div class="eyebrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Employer</div>
+          <h2>Lakeside Distribution</h2>
+          <div class="sub">Chicago, IL · Logistics & Warehousing</div>
+          <span class="verify-pill pending"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1b1300" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Verification pending</span>
+        </div>
+        <div class="scroll">
+          <div class="stat-grid">
+            <div class="stat-card accent"><b>3</b><span>Active job posts</span></div>
+            <div class="stat-card"><b>17</b><span>New applicants</span></div>
+            <div class="stat-card"><b>5</b><span>In review</span></div>
+            <div class="stat-card"><b>2</b><span>Interviews requested</span></div>
+          </div>
+          <div class="cta-strip">
+            <button class="btn btn-hivis" onclick="go('emp-post')">+ Post a job</button>
+            <button class="btn btn-ghost" style="flex:.7" onclick="go('emp-billing')">Plan</button>
+          </div>
+          <div class="group-label">Your job posts</div>
+          <div id="empJobsHome"></div>
+          <div style="height:80px"></div>
+        </div>
+        <button class="post-fab" onclick="go('emp-post')"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- EMPLOYER — POST A JOB -->
+      <section class="screen" id="emp-post">
+        <div class="appbar"><button class="back" onclick="go('emp-dash')">‹</button><h2>Post a job</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>Job title</label><input class="input" id="epTitle" value="Forklift Operator" /></div>
+          <div class="field"><label>Company name shown to seekers</label><input class="input" value="Lakeside Distribution" /></div>
+          <div class="row-2">
+            <div class="field"><label>City / State</label><input class="input" value="Chicago, IL" /></div>
+            <div class="field"><label>ZIP</label><input class="input" value="60616" /></div>
+          </div>
+          <div class="field"><label>Street address <span class="helper" style="font-weight:500">(optional)</span></label><input class="input" placeholder="Shown after applicant is hired" /></div>
+          <div class="row-2">
+            <div class="field"><label>Pay min ($/hr)</label><input class="input" value="19" /></div>
+            <div class="field"><label>Pay max ($/hr)</label><input class="input" value="23" /></div>
+          </div>
+          <p class="helper" style="margin:-6px 0 12px">Pay range is required — many states & cities mandate pay transparency.</p>
+          <div class="field"><label>Employment type</label><select class="input"><option>Full-time</option><option selected>Temp-to-hire</option><option>Part-time</option><option>Contract</option><option>Direct hire</option></select></div>
+          <div class="field"><label>Shift</label>
+            <div class="chips"><div class="chip on amber" onclick="tc(this)">1st</div><div class="chip on amber" onclick="tc(this)">2nd</div><div class="chip" onclick="tc(this)">3rd</div><div class="chip" onclick="tc(this)">Weekend</div><div class="chip" onclick="tc(this)">Flexible</div></div>
+          </div>
+          <div class="field"><label>Category</label><select class="input"><option>Logistics</option><option>Warehouse</option><option>Manufacturing</option><option>Industrial</option><option>Healthcare</option><option>Skilled Trades</option><option>Office/Admin</option><option>Customer Service</option></select></div>
+          <div class="field"><label>Job description</label><textarea class="input" style="min-height:110px">Operate cherry picker and sit-down forklift to pick, stage, and load orders. Temp-to-hire with a path to permanent.</textarea></div>
+          <div class="field"><label>Requirements (one per line)</label><textarea class="input" style="min-height:90px">Forklift certification (or willing to certify)
+6+ months warehouse experience
+Able to lift up to 50 lbs</textarea></div>
+          <div class="field"><label>Benefits</label><textarea class="input" style="min-height:70px">Weekly pay, overtime, safety boots stipend</textarea></div>
+          <div class="row-2">
+            <div class="field"><label>Number of openings</label><input class="input" value="4" /></div>
+            <div class="field"><label>Urgency</label><select class="input"><option>Normal</option><option selected>Urgent</option><option>Featured</option></select></div>
+          </div>
+          <div class="field"><label>Contact person</label><input class="input" value="Dana Whitfield" /></div>
+          <div class="field"><label>Screening questions (one per line)</label><textarea class="input" style="min-height:80px">Are you authorized to work in the US?
+Can you work 1st or 2nd shift?
+Years of warehouse experience?</textarea></div>
+          <div class="field"><label>Status</label>
+            <div class="chips"><div class="chip on" onclick="tcOne(this)">Active</div><div class="chip" onclick="tcOne(this)">Paused</div></div>
+          </div>
+          <div class="disclaimer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Don't request protected-class info (age, race, religion, etc.). Posts are reviewed by our team before going live.</span></div>
+          <button class="btn btn-primary mt" onclick="toast('Job submitted for review');go('emp-dash')">Submit job for review</button>
+        </div></div>
+      </section>
+
+      <!-- EMPLOYER — APPLICANTS (pipeline) -->
+      <section class="screen" id="emp-applicants">
+        <div class="appbar blue"><button class="back" onclick="go('emp-dash')">‹</button><h2 id="empPipeTitle">Applicants</h2></div>
+        <div class="pipe-tabs" id="empPipeTabs"></div>
+        <div class="scroll" id="empPipeList"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- EMPLOYER — APPLICANT DETAIL -->
+      <section class="screen" id="emp-applicant">
+        <div class="appbar blue"><button class="back" onclick="go('emp-applicants')">‹</button><h2>Applicant</h2></div>
+        <div class="scroll" id="empApplicantBody"></div>
+      </section>
+
+      <!-- EMPLOYER — MESSAGES -->
+      <section class="screen" id="emp-messages">
+        <div class="appbar blue"><h2>Messages</h2></div>
+        <div class="scroll">
+          <div class="msg-thread" onclick="toast('Opens chat with applicant')"><div class="av" style="background:#11539E">MR</div><div><h4>Marcus Reed</h4><div class="preview">Yes, I can start Monday. Thank you!</div></div><div class="unread"></div></div>
+          <div class="msg-thread" onclick="toast('Opens chat with applicant')"><div class="av" style="background:#0f7a37">TC</div><div><h4>Tanya Cole</h4><div class="preview">Is the role 1st shift only?</div></div><div class="time">3h</div></div>
+          <div class="msg-thread" onclick="toast('Opens chat with applicant')"><div class="av" style="background:#9a6a00">JG</div><div><h4>Jordan Gray</h4><div class="preview">Applied for Shipping Clerk</div></div><div class="time">1d</div></div>
+          <div class="legal-note" style="margin:16px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0B3B72" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg><span>Keep messages job-related. Don't request protected-class info or payment from applicants.</span></div>
+        </div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- EMPLOYER — ACCOUNT -->
+      <section class="screen" id="emp-account">
+        <div class="prof-head" style="background:var(--blue)"><div class="prof-av">LD</div><div><h2>Lakeside Distribution</h2><div class="sub">Employer · Chicago, IL</div></div></div>
+        <div class="scroll">
+          <div class="group-label">Company</div>
+          <div class="group">
+            <div class="row" onclick="go('emp-profile')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><div><h4>Company profile</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="toast('Invite recruiters / team members')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><div><h4>Team members</h4><p>Invite recruiters — placeholder</p></div><span class="chev">›</span></div>
+            <div class="row" onclick="go('emp-billing')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div><h4>Billing & plan</h4></div><span class="chev">›</span></div>
+          </div>
+          <div class="group-label">Compliance</div>
+          <div class="group">
+            <div class="row" onclick="sheet('eeo')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg></div><div><h4>Non-discrimination policy</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('terms')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5"/><path d="M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div><div><h4>Terms & Privacy</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('bgcheck')"><div class="r-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div><h4>Background checks</h4><p>FCRA placeholder</p></div><span class="chev">›</span></div>
+          </div>
+          <div class="group-label">Demo</div>
+          <div class="group"><div class="row" onclick="go('onboard')"><div class="r-ico" style="background:#FFF4D6;color:#9a6a00"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></div><div><h4>Switch account type</h4></div><span class="chev">›</span></div></div>
+          <p class="demo-note" style="padding:8px 24px 24px">Employers make all final hiring decisions. Local Job Listings USA does not guarantee applicants, interviews, or hires.</p>
+        </div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- EMPLOYER — BILLING -->
+      <section class="screen" id="emp-billing">
+        <div class="appbar"><button class="back" onclick="go('emp-dash')">‹</button><h2>Plans & billing</h2></div>
+        <div class="scroll"><div class="pad" id="empBilling"></div></div>
+      </section>
+
+      <!-- ============================================================
+           STAFFING AGENCY
+      ============================================================ -->
+      <section class="screen" id="ag-signup">
+        <div class="appbar"><button class="back" onclick="go('onboard')">‹</button><h2>Agency signup</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>Agency name</label><input class="input" value="FrontLine Staffing" /></div>
+          <div class="field"><label>Your name</label><input class="input" value="Priya Nandakumar" /></div>
+          <div class="field"><label>Work email</label><input class="input" value="priya@frontlinestaffing.com" /></div>
+          <div class="field"><label>Work phone</label><input class="input" value="(312) 555-0233" /></div>
+          <div class="field"><label>Create password</label><input class="input" type="password" value="········" /></div>
+          <div class="agree-box">
+            <h4>Equal opportunity commitment</h4>
+            <p>All staffing partners agree to our non-discrimination policy for every client and placement.</p>
+            <div class="consent on req" onclick="toggleC(this)" style="background:#fff;margin-top:10px"><div class="cbox">✓</div><p>Our agency and recruiters will <b>not discriminate</b> based on protected characteristics in sourcing, screening, or placement. <span style="color:#0f7a37">(required)</span></p></div>
+          </div>
+          <div class="consent on req" onclick="toggleC(this)"><div class="cbox">✓</div><p><b>I agree</b> to the Terms & Conditions and Privacy Policy. <span style="color:#0f7a37">(required)</span></p></div>
+          <button class="btn" style="background:#0f7a37;color:#fff" onclick="go('ag-profile')">Continue</button>
+        </div></div>
+      </section>
+
+      <!-- AGENCY — PROFILE + BRANCHES -->
+      <section class="screen" id="ag-profile">
+        <div class="appbar"><button class="back" onclick="go('ag-signup')">‹</button><h2>Agency profile</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>About the agency</label><textarea class="input">Light-industrial and healthcare staffing across the Midwest. Temp, temp-to-hire, and direct placement.</textarea></div>
+          <div class="field"><label>Specialties</label>
+            <div class="chips"><div class="chip on" onclick="tc(this)">Industrial</div><div class="chip on" onclick="tc(this)">Logistics</div><div class="chip" onclick="tc(this)">Healthcare</div><div class="chip" onclick="tc(this)">Skilled Trades</div></div>
+          </div>
+          <div class="group-label" style="margin-left:0">Branch locations</div>
+          <div class="doc-item"><div class="d-ico" style="background:var(--green-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0f7a37" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div><h4>Chicago Branch</h4><div class="d-sub">230 W Lake St · 4 recruiters</div></div></div>
+          <div class="doc-item"><div class="d-ico" style="background:var(--green-tint)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0f7a37" stroke-width="2"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div><h4>Aurora Branch</h4><div class="d-sub">88 Commerce Dr · 2 recruiters</div></div></div>
+          <div class="add-doc" style="color:#0f7a37" onclick="toast('Add branch location')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add branch location</div>
+          <button class="btn mt" style="background:#0f7a37;color:#fff" onclick="go('ag-dash')">Create agency profile</button>
+        </div></div>
+      </section>
+
+      <!-- AGENCY — DASHBOARD -->
+      <section class="screen" id="ag-dash">
+        <div class="dash-head ag">
+          <div class="eyebrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/></svg> Staffing agency</div>
+          <h2>FrontLine Staffing</h2>
+          <div class="sub">2 branches · 6 recruiters</div>
+          <span class="verify-pill ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> Verified partner</span>
+        </div>
+        <div class="scroll">
+          <div class="stat-grid">
+            <div class="stat-card accent ag"><b>8</b><span>Open job orders</span></div>
+            <div class="stat-card"><b>34</b><span>Active candidates</span></div>
+            <div class="stat-card"><b>11</b><span>Unassigned</span></div>
+            <div class="stat-card"><b>3</b><span>Placements this week</span></div>
+          </div>
+          <div class="cta-strip">
+            <button class="btn" style="background:var(--hivis);color:#1b1300" onclick="go('ag-post')">+ New job order</button>
+            <button class="btn btn-ghost" style="flex:.7" onclick="go('ag-billing')">Plan</button>
+          </div>
+          <div class="group-label">Open job orders</div>
+          <div id="agOrdersHome"></div>
+          <div style="height:80px"></div>
+        </div>
+        <button class="post-fab" onclick="go('ag-post')"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- AGENCY — JOB ORDERS -->
+      <section class="screen" id="ag-orders">
+        <div class="appbar ag" style="background:#0f7a37;color:#fff"><h2>Job orders</h2></div>
+        <div class="scroll" id="agOrdersList" style="padding-top:14px"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- AGENCY — POST JOB ORDER -->
+      <section class="screen" id="ag-post">
+        <div class="appbar"><button class="back" onclick="go('ag-dash')">‹</button><h2>New job order</h2></div>
+        <div class="scroll"><div class="pad">
+          <div class="field"><label>Job title</label><input class="input" value="Warehouse Associate" /></div>
+          <div class="field"><label>Client / company <span class="helper" style="font-weight:500">(optional, can stay confidential)</span></label><input class="input" value="Confidential — Logistics client" /></div>
+          <div class="field"><label>Agency branch</label><select class="input"><option>Chicago Branch</option><option>Aurora Branch</option></select></div>
+          <div class="row-2">
+            <div class="field"><label>City / State</label><input class="input" value="Bedford Park, IL" /></div>
+            <div class="field"><label>Start date</label><input class="input" value="ASAP" /></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>Pay min ($/hr)</label><input class="input" value="18" /></div>
+            <div class="field"><label>Pay max ($/hr)</label><input class="input" value="21" /></div>
+          </div>
+          <div class="field"><label>Placement type</label>
+            <div class="chips"><div class="chip on" onclick="tcOne(this)">Temp</div><div class="chip" onclick="tcOne(this)">Temp-to-hire</div><div class="chip" onclick="tcOne(this)">Contract</div><div class="chip" onclick="tcOne(this)">Direct hire</div></div>
+          </div>
+          <div class="field"><label>Shift</label>
+            <div class="chips"><div class="chip on amber" onclick="tc(this)">1st</div><div class="chip" onclick="tc(this)">2nd</div><div class="chip" onclick="tc(this)">3rd</div><div class="chip" onclick="tc(this)">Weekend</div></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>Openings</label><input class="input" value="6" /></div>
+            <div class="field"><label>Urgency</label><select class="input"><option>Normal</option><option selected>Urgent</option></select></div>
+          </div>
+          <div class="field"><label>Requirements</label><textarea class="input" style="min-height:80px">Able to lift 50 lbs, stand full shift, reliable transportation</textarea></div>
+          <div class="field"><label>Background / drug screen</label>
+            <div class="chips"><div class="chip on" onclick="tcOne(this)">Required</div><div class="chip" onclick="tcOne(this)">Not required</div></div>
+            <p class="helper mt-s">Placeholder — FCRA-compliant authorization & adverse-action flow required before running screens.</p>
+          </div>
+          <div class="field"><label>Internal notes <span class="helper" style="font-weight:500">(agency only — never shown to candidates)</span></label>
+            <textarea class="input" style="min-height:70px">Client wants reliable temp-to-hire; bill rate $27. Submit top 3 by Friday.</textarea>
+            <div class="note-internal mt-s"><div class="lbl"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Internal only</div>Visible to your recruiters, never to job seekers or the public.</div>
+          </div>
+          <button class="btn mt" style="background:#0f7a37;color:#fff" onclick="toast('Job order created');go('ag-dash')">Create job order</button>
+        </div></div>
+      </section>
+
+      <!-- AGENCY — CANDIDATE PIPELINE -->
+      <section class="screen" id="ag-pipeline">
+        <div class="appbar ag" style="background:#0f7a37;color:#fff"><button class="back" onclick="go('ag-dash')" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none">‹</button><h2 id="agPipeTitle">Candidates</h2></div>
+        <div class="pipe-tabs" id="agPipeTabs"></div>
+        <div class="scroll" id="agPipeList"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- AGENCY — CANDIDATE DETAIL -->
+      <section class="screen" id="ag-candidate">
+        <div class="appbar ag" style="background:#0f7a37;color:#fff"><button class="back" onclick="go('ag-pipeline')" style="background:rgba(255,255,255,.16);color:#fff;box-shadow:none">‹</button><h2>Candidate</h2></div>
+        <div class="scroll" id="agCandidateBody"></div>
+      </section>
+
+      <!-- AGENCY — RECRUITERS / TEAM -->
+      <section class="screen" id="ag-recruiters">
+        <div class="appbar ag" style="background:#0f7a37;color:#fff"><h2>Team</h2></div>
+        <div class="scroll" style="padding-top:14px" id="agRecruiters"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- AGENCY — ACCOUNT -->
+      <section class="screen" id="ag-account">
+        <div class="prof-head" style="background:#0f7a37"><div class="prof-av" style="background:#fff;color:#0f7a37">FS</div><div><h2>FrontLine Staffing</h2><div class="sub">Staffing agency · 2 branches</div></div></div>
+        <div class="scroll">
+          <div class="group-label">Agency</div>
+          <div class="group">
+            <div class="row" onclick="go('ag-profile')"><div class="r-ico" style="background:var(--green-tint);color:#0f7a37"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/></svg></div><div><h4>Agency profile & branches</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="go('ag-recruiters')"><div class="r-ico" style="background:var(--green-tint);color:#0f7a37"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><h4>Recruiters & seats</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="go('ag-billing')"><div class="r-ico" style="background:var(--green-tint);color:#0f7a37"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div><h4>Billing & plan</h4></div><span class="chev">›</span></div>
+          </div>
+          <div class="group-label">Compliance</div>
+          <div class="group">
+            <div class="row" onclick="sheet('eeo')"><div class="r-ico" style="background:var(--green-tint);color:#0f7a37"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg></div><div><h4>Non-discrimination policy</h4></div><span class="chev">›</span></div>
+            <div class="row" onclick="sheet('bgcheck')"><div class="r-ico" style="background:var(--green-tint);color:#0f7a37"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg></div><div><h4>Background / drug screens</h4><p>FCRA placeholder</p></div><span class="chev">›</span></div>
+          </div>
+          <div class="group-label">Demo</div>
+          <div class="group"><div class="row" onclick="go('onboard')"><div class="r-ico" style="background:#FFF4D6;color:#9a6a00"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg></div><div><h4>Switch account type</h4></div><span class="chev">›</span></div></div>
+          <p class="demo-note" style="padding:8px 24px 24px">Staffing agencies and employers make all final hiring decisions.</p>
+        </div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- AGENCY — BILLING -->
+      <section class="screen" id="ag-billing">
+        <div class="appbar"><button class="back" onclick="go('ag-dash')">‹</button><h2>Agency plans</h2></div>
+        <div class="scroll"><div class="pad" id="agBilling"></div></div>
+      </section>
+
+      <!-- ============================================================
+           ADMIN
+      ============================================================ -->
+      <section class="screen" id="admin-dash">
+        <div class="dash-head admin">
+          <div class="eyebrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/></svg> Local Job Listings · Staff</div>
+          <h2>Admin overview</h2>
+          <div class="sub">Moderation & platform health</div>
+        </div>
+        <div class="scroll">
+          <div class="stat-grid">
+            <div class="stat-card"><b>1,240</b><span>Job seekers</span></div>
+            <div class="stat-card"><b>318</b><span>Employers</span></div>
+            <div class="stat-card"><b>54</b><span>Agencies</span></div>
+            <div class="stat-card accent"><b>9</b><span>Pending review</span></div>
+          </div>
+          <div class="group-label">Moderation queue</div>
+          <div id="adminQueue"></div>
+          <div style="height:70px"></div>
+        </div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- ADMIN — ACCOUNTS -->
+      <section class="screen" id="admin-accounts">
+        <div class="appbar" style="background:var(--ink);color:#fff"><h2>Accounts</h2></div>
+        <div class="seg" id="adminAccSeg">
+          <button class="on" onclick="adminAccTab(0,this)">Seekers</button>
+          <button onclick="adminAccTab(1,this)">Employers</button>
+          <button onclick="adminAccTab(2,this)">Agencies</button>
+        </div>
+        <div class="scroll" id="adminAccList" style="padding-top:6px"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- ADMIN — JOBS -->
+      <section class="screen" id="admin-jobs">
+        <div class="appbar" style="background:var(--ink);color:#fff"><h2>Job posts</h2></div>
+        <div class="seg" id="adminJobSeg">
+          <button class="on" onclick="adminJobTab(0,this)">Pending</button>
+          <button onclick="adminJobTab(1,this)">Flagged</button>
+          <button onclick="adminJobTab(2,this)">Live</button>
+        </div>
+        <div class="scroll" id="adminJobList" style="padding-top:6px"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- ADMIN — LOGS -->
+      <section class="screen" id="admin-logs">
+        <div class="appbar" style="background:var(--ink);color:#fff"><h2>Logs</h2></div>
+        <div class="seg" id="adminLogSeg">
+          <button class="on" onclick="adminLogTab(0,this)">Consent logs</button>
+          <button onclick="adminLogTab(1,this)">Audit logs</button>
+        </div>
+        <div class="scroll" id="adminLogList"></div>
+        <div class="tabbar"></div>
+      </section>
+
+      <!-- SHEET + TOAST -->
+      <div class="sheet-bg" id="sheetBg" onclick="if(event.target===this)closeSheet()">
+        <div class="sheet" id="sheetContent"></div>
+      </div>
+      <div class="toast" id="toast"></div>
+
+    </div>
+  </div>
+
+  <div class="stage-tag" style="max-width:380px;opacity:.7">Tip: try the radius filters → tap a job → apply → then hit “Advance status (demo)” on the tracker.</div>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+============================================================ */
+const JOBS = [
+  {id:1,title:"Forklift Operator — Cherry Picker",co:"Distribution Center",city:"Chicago, IL",dist:4.2,type:"Temp-to-hire",shift:"1st & 2nd",cat:"Logistics",low:19,high:23,urgent:true,featured:true,multi:false,posted:"Posted today",color:"#11539E",
+    desc:"Operate cherry picker and sit-down forklift to pick, stage, and load orders in a fast-paced distribution center. Temp-to-hire with a clear path to permanent.",
+    reqs:["Valid forklift certification (or willing to certify)","6+ months warehouse experience","Able to lift up to 50 lbs","Reliable transportation"],
+    bens:["Weekly pay","Temp-to-hire","Overtime available","Safety boots stipend"],
+    fit:"Your forklift certification and 3 years of warehouse experience line up well with this role's pick-and-load duties and shift."},
+  {id:2,title:"General Labor — Production Line",co:"Manufacturing Plant",city:"Dallas, TX",dist:7.8,type:"Full-time",shift:"All shifts",cat:"Manufacturing",low:15,high:18,urgent:false,featured:true,multi:true,posted:"Posted today",color:"#0f7a37",
+    desc:"Multiple openings on the production line. Assemble, inspect, and package products. Training provided — no experience required.",
+    reqs:["Able to stand for full shift","Basic English communication","Pass standard onboarding"],
+    bens:["Multiple openings","Weekly pay","Training provided","Benefits after 60 days"],
+    fit:"Entry-friendly role. Your reliability and warehouse background are a plus, though no experience is required."},
+  {id:3,title:"Registered Nurse — Med/Surg",co:"Regional Hospital Network",city:"Houston, TX",dist:12.1,type:"Full-time",shift:"Night shift",cat:"Healthcare",low:36,high:52,urgent:true,featured:false,multi:false,posted:"Sign-on bonus",color:"#11539E",
+    desc:"Provide direct patient care on a busy med/surg unit. Night differential and sign-on bonus available for qualified RNs.",
+    reqs:["Active RN license","BLS certification","1+ year acute care preferred"],
+    bens:["Sign-on bonus","Night differential","Health/dental/vision","401(k) match"],
+    fit:"This role requires an active RN license. Add your license details to strengthen your match."},
+  {id:4,title:"Welder — MIG/TIG Certified",co:"Fabrication Shop",city:"La Porte, TX",dist:9.3,type:"Direct hire",shift:"1st shift",cat:"Skilled Trades",low:22,high:30,urgent:false,featured:false,multi:false,posted:"Posted 2 days ago",color:"#9a6a00",
+    desc:"Read blueprints and perform MIG/TIG welding on custom fabrication projects. Direct-hire position with a stable, family-owned shop.",
+    reqs:["MIG/TIG certification","2+ years welding experience","Able to read blueprints"],
+    bens:["Direct hire","Health insurance","Paid time off","Tool allowance"],
+    fit:"Strong skilled-trades match if you hold a MIG/TIG certification. Highlight your welding hours when you apply."},
+  {id:5,title:"Shipping & Receiving Clerk",co:"Logistics Co.",city:"Atlanta, GA",dist:6.0,type:"Full-time",shift:"1st shift",cat:"Logistics",low:16,high:20,urgent:false,featured:false,multi:false,posted:"Posted 3 days ago",color:"#11539E",
+    desc:"Receive, verify, and process inbound and outbound shipments. Maintain accurate inventory records using an RF scanner.",
+    reqs:["Warehouse or clerical experience","Comfortable with handheld scanners","Attention to detail"],
+    bens:["Weekly pay","Climate-controlled facility","Growth opportunities"],
+    fit:"Your RF scanner and inventory experience match this clerk role closely."},
+  {id:6,title:"CNC Machine Operator",co:"Precision Parts Mfg",city:"Detroit, MI",dist:14.7,type:"Full-time",shift:"2nd shift",cat:"Manufacturing",low:21,high:27,urgent:false,featured:false,multi:false,posted:"Posted today",color:"#0f7a37",
+    desc:"Set up and operate CNC machines to produce precision parts. Monitor quality and make adjustments to hold tight tolerances.",
+    reqs:["CNC operation experience","Able to read calipers/micrometers","2nd shift availability"],
+    bens:["Shift premium","Overtime available","Benefits","Quarterly bonus"],
+    fit:"Good manufacturing fit. Your machine-operation background transfers well to CNC work."}
+];
+
+const STAGES = ["Submitted","Resume received","In review","Second-stage review","Interview requested","Decision"];
+const STAGE_DESC = [
+  "We received your application.",
+  "The employer downloaded your resume.",
+  "A recruiter is reviewing your profile.",
+  "You advanced to a closer look.",
+  "The employer wants to talk!",
+  ""
+];
+
+let state = {
+  view:'list',
+  saved:new Set([3]),
+  applied:[],          // {jobId, stage}
+  currentJob:null,     // detail
+  trackJob:1,
+  stage:1,             // tracker stage index (0-5)
+  outcome:'offer',     // 'offer' | 'reject'
+  applyStep:0,
+  history:[],
+  resumeMode:'upload'
+};
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+const APP_SCREENS = ['feed','map-screen','apps','saved','messages','profile','tracker'];
+function go(id, skipHist){
+  const cur = document.querySelector('.screen.active');
+  if(cur && !skipHist && cur.id!==id) state.history.push(cur.id);
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.querySelector('.scroll') && (el.querySelector('.scroll').scrollTop=0);
+  // status bar color
+  const blueTops = ['splash'];
+  const sb = document.getElementById('statusbar');
+  sb.classList.toggle('on-blue', id==='splash');
+  // build dynamic content
+  if(id==='feed') renderFeed();
+  if(id==='map-screen') renderMap();
+  if(id==='tracker') renderTracker();
+  if(id==='apps') renderApps();
+  if(id==='saved') renderSaved();
+  // new role screens
+  route(id);
+  mountNav(id);
+  // nav highlight
+  syncNav(id);
+}
+function back(){
+  const prev = state.history.pop();
+  go(prev||'feed', true);
+}
+function roleStub(role){
+  toast(role+' flow — coming in the next build');
+}
+
+/* ============================================================
+   BOTTOM NAV
+============================================================ */
+function navHTML(active){
+  const items=[
+    {id:'feed',label:'Jobs',icon:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>'},
+    {id:'saved',label:'Saved',icon:'<path d="M5 3v18l7-5 7 5V3z"/>'},
+    {id:'apps',label:'Tracker',icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
+    {id:'messages',label:'Messages',icon:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',badge:1},
+    {id:'profile',label:'Profile',icon:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>'}
+  ];
+  return items.map(it=>{
+    const on = (active===it.id || (active==='map-screen'&&it.id==='feed') || (active==='tracker'&&it.id==='apps'));
+    const badge = it.badge?`<span class="badge-n">${it.badge}</span>`:'';
+    return `<button class="tab ${on?'on':''}" onclick="go('${it.id}')">
+      <span class="ndot"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${it.icon}</svg>${badge}</span>
+      ${it.label}</button>`;
+  }).join('');
+}
+function syncNav(id){
+  ['feed','map','apps','saved','messages','profile','tracker'].forEach(s=>{
+    const n=document.getElementById('nav-'+s);
+    if(n) n.innerHTML=navHTML(id);
+  });
+}
+
+/* ============================================================
+   FEED
+============================================================ */
+function jobCardHTML(j){
+  const badges=[];
+  if(j.urgent) badges.push('<span class="badge b-urgent">🔥 Urgent</span>');
+  if(j.featured) badges.push('<span class="badge b-featured">⭐ Featured</span>');
+  if(j.multi) badges.push('<span class="badge b-multi">Multiple openings</span>');
+  badges.push(`<span class="badge b-cat">${j.cat}</span>`);
+  const saved = state.saved.has(j.id);
+  return `<div class="job-card" onclick="openJob(${j.id})">
+    <div class="badges">${badges.join('')}</div>
+    <h3>${j.title}</h3>
+    <div class="co">${j.co} · ${j.city} · ${j.dist} mi away</div>
+    <div class="job-meta">
+      <span class="tag">💼 ${j.type}</span>
+      <span class="tag">🕐 ${j.shift}</span>
+    </div>
+    <div class="pay-line">
+      <span class="pay">$${j.low}–$${j.high}<small>/hr</small></span>
+      <button class="save-btn ${saved?'saved':''}" onclick="event.stopPropagation();toggleSave(${j.id},this)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="${saved?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M5 3v18l7-5 7 5V3z"/></svg>
+      </button>
+    </div>
+    <div class="posted">${j.posted}</div>
+  </div>`;
+}
+function renderFeed(){
+  document.getElementById('feedList').innerHTML = JOBS.map(jobCardHTML).join('') + '<div style="height:14px"></div>';
+}
+function setView(v){
+  state.view=v;
+  if(v==='map') go('map-screen'); else go('feed');
+}
+
+/* ============================================================
+   MAP
+============================================================ */
+function renderMap(){
+  const c = document.getElementById('mapCanvas');
+  c.querySelectorAll('.pin').forEach(p=>p.remove());
+  const pos=[{x:30,y:24},{x:64,y:38},{x:48,y:70},{x:22,y:58},{x:74,y:64},{x:40,y:44}];
+  JOBS.forEach((j,i)=>{
+    const p=document.createElement('div');
+    p.className='pin'+(j.urgent?' urgent':'');
+    p.style.left=pos[i].x+'%';p.style.top=pos[i].y+'%';
+    p.innerHTML=`<div class="pin-pay">$${j.low}</div><div class="pin-stem"></div>`;
+    p.onclick=()=>showMapCard(j.id);
+    c.appendChild(p);
+  });
+  document.getElementById('mapCard').classList.remove('show');
+}
+function showMapCard(id){
+  const j=JOBS.find(x=>x.id===id);
+  const el=document.getElementById('mapCard');
+  el.innerHTML=`<div class="badges">${j.urgent?'<span class="badge b-urgent">🔥 Urgent</span>':''}<span class="badge b-cat">${j.cat}</span></div>
+    <h3 style="font-size:19px">${j.title}</h3>
+    <div class="co" style="color:var(--ink-2);font-size:13px;margin-top:2px">${j.co} · ${j.dist} mi</div>
+    <div class="pay-line" style="margin-top:11px;padding-top:11px">
+      <span class="pay">$${j.low}–$${j.high}<small>/hr</small></span>
+      <button class="btn btn-primary" style="width:auto;padding:11px 20px;font-size:15px" onclick="openJob(${j.id})">View job</button>
+    </div>`;
+  el.classList.add('show');
+}
+
+/* ============================================================
+   DETAIL
+============================================================ */
+function openJob(id){
+  state.currentJob=id;
+  const j=JOBS.find(x=>x.id===id);
+  const saved=state.saved.has(id);
+  const badges=[];
+  if(j.urgent) badges.push('<span class="badge b-urgent">🔥 Urgent</span>');
+  if(j.featured) badges.push('<span class="badge b-featured">⭐ Featured</span>');
+  badges.push(`<span class="badge b-cat">${j.cat}</span>`);
+  document.getElementById('detailHero').innerHTML=`
+    <div class="badges">${badges.join('')}</div>
+    <h1>${j.title}</h1>
+    <div class="co">${j.co} · ${j.city} · ${j.dist} mi away</div>
+    <div class="detail-pay">$${j.low}–$${j.high}<small>/hr</small></div>`;
+  document.getElementById('detailBody').innerHTML=`
+    <div class="sec">
+      <div class="job-meta">
+        <span class="tag">💼 ${j.type}</span>
+        <span class="tag">🕐 ${j.shift}</span>
+        <span class="tag">📍 ${j.dist} mi</span>
+        <span class="tag">${j.posted}</span>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="ai-fit">
+        <div class="ai-h"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#11539E" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg> Why this could fit you</div>
+        <p>${j.fit}</p>
+        <p class="ai-disc">AI-assisted recommendation. Final hiring decisions are made by employers.</p>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>About the role</h3>
+      <p>${j.desc}</p>
+    </div>
+    <div class="sec">
+      <h3>What you'll need</h3>
+      ${j.reqs.map(r=>`<div class="li"><span class="dot"></span><span>${r}</span></div>`).join('')}
+    </div>
+    <div class="sec">
+      <h3>Pay & benefits</h3>
+      <p style="margin-bottom:11px"><b style="font-family:'Barlow Condensed';font-size:21px;color:var(--ink)">$${j.low}–$${j.high}/hr</b> · pay range shown for transparency</p>
+      <div class="bens">${j.bens.map(b=>`<span class="ben">✓ ${b}</span>`).join('')}</div>
+    </div>
+    <div class="sec" style="border-bottom:none">
+      <div class="disclaimer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span>This is a job listing. Applying does not guarantee a job, interview, or employer contact. The employer makes all hiring decisions.</span>
+      </div>
+    </div>
+    <div style="height:10px"></div>`;
+  const sb=document.getElementById('detailSave');
+  sb.classList.toggle('saved',saved);
+  go('detail');
+}
+function toggleSaveDetail(){
+  const id=state.currentJob;
+  if(state.saved.has(id)){state.saved.delete(id);toast('Removed from saved');}
+  else{state.saved.add(id);toast('Saved');}
+  document.getElementById('detailSave').classList.toggle('saved',state.saved.has(id));
+}
+function toggleSave(id,btn){
+  if(state.saved.has(id)){state.saved.delete(id);btn.classList.remove('saved');btn.querySelector('svg').setAttribute('fill','none');toast('Removed from saved');}
+  else{state.saved.add(id);btn.classList.add('saved');btn.querySelector('svg').setAttribute('fill','currentColor');toast('Saved');}
+}
+
+/* ============================================================
+   APPLY FLOW
+============================================================ */
+function startApply(){
+  state.applyStep=0;
+  showApplyStep();
+  const j=JOBS.find(x=>x.id===state.currentJob);
+  go('apply');
+}
+function showApplyStep(){
+  document.querySelectorAll('.apply-step').forEach(s=>s.classList.remove('active'));
+  document.querySelector(`.apply-step[data-step="${state.applyStep}"]`).classList.add('active');
+  document.querySelectorAll('#stepDots i').forEach((d,i)=>d.classList.toggle('on',i<=state.applyStep));
+  const titles=['Quick apply','A few questions','Review & submit'];
+  document.getElementById('applyTitle').textContent=titles[state.applyStep];
+  document.getElementById('applyNext').textContent = state.applyStep===2 ? 'Submit application' : 'Continue';
+  document.getElementById('applyBack').style.visibility = 'visible';
+}
+function applyNext(){
+  if(state.applyStep<2){state.applyStep++;showApplyStep();document.querySelector('#apply .scroll').scrollTop=0;}
+  else submitApply();
+}
+function applyPrev(){
+  if(state.applyStep>0){state.applyStep--;showApplyStep();}
+  else go('detail');
+}
+function submitApply(){
+  const id=state.currentJob;
+  if(!state.applied.find(a=>a.jobId===id)) state.applied.push({jobId:id,stage:1});
+  state.trackJob=id;state.stage=1;
+  const j=JOBS.find(x=>x.id===id);
+  document.getElementById('successMsg').textContent=`Your application to ${j.co} for ${j.title} is in. We'll keep you posted at every step.`;
+  go('success');
+}
+function selResume(el,mode){
+  document.querySelectorAll('.resume-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');state.resumeMode=mode;
+  if(mode==='new') toast('File picker opens here');
+}
+function goAI(){ go('airesume'); }
+
+/* ============================================================
+   TRACKER
+============================================================ */
+function renderTracker(){
+  const j=JOBS.find(x=>x.id===state.trackJob);
+  document.getElementById('trackTitle').textContent=j.title;
+  document.getElementById('trackCo').textContent=`${j.co} · ${j.city}`;
+  const pct=Math.round((state.stage/5)*100);
+  document.getElementById('trackPct').textContent=pct+'%';
+
+  let html='';
+  for(let i=0;i<STAGES.length;i++){
+    let cls='';
+    if(i<state.stage) cls='done';
+    else if(i===state.stage && state.stage<5) cls='current';
+    else if(i===state.stage && state.stage>=5) cls='done';
+    // final node handled by outcome card; show as done if reached
+    const isLast = i===5;
+    const label = isLast ? (state.stage>=5 ? (state.outcome==='offer'?'Offer extended':'Decision made') : 'Decision') : STAGES[i];
+    let icon = '○';
+    if(cls==='done') icon='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>';
+    else if(cls==='current') icon='<b style="font-family:Barlow Condensed">'+(i+1)+'</b>';
+    else icon='<span style="font-family:Barlow Condensed;font-weight:700">'+(i+1)+'</span>';
+    const when = cls==='done' ? '<div class="when">'+fakeTime(i)+'</div>' : (cls==='current'?'<div class="when">In progress</div>':'');
+    const nowBadge = cls==='current' ? '<span class="badge-now">Happening now</span>' : '';
+    const lineHTML = isLast ? '' : `<div class="line"></div>`;
+    html+=`<div class="step ${cls}">
+      <div class="rail"><div class="node">${icon}</div>${lineHTML}</div>
+      <div class="step-body">
+        <h4>${label}</h4>
+        ${ (cls==='done'||cls==='current') && STAGE_DESC[i] ? '<div class="when" style="color:#3c4d62;margin-top:2px">'+STAGE_DESC[i]+'</div>':''}
+        ${when}${nowBadge}
+      </div>
+    </div>`;
+  }
+  document.getElementById('stepper').innerHTML=html;
+
+  // outcome card
+  const ow=document.getElementById('outcomeWrap');
+  if(state.stage>=5){
+    if(state.outcome==='offer'){
+      ow.innerHTML=`<div class="outcome offer">
+        <h3>🎉 Offer extended!</h3>
+        <p>${j.co} would like to move forward. Check your messages to review details and next steps.</p>
+        <button class="btn btn-primary mt-s" style="font-size:15px;padding:13px" onclick="go('messages')">View message</button>
+      </div>`;
+    } else {
+      ow.innerHTML=`<div class="outcome reject">
+        <h3>Not selected this time</h3>
+        <p>The employer chose to move forward with other candidates. This happens often and isn't a reflection of your worth — keep applying.</p>
+        <span class="reason-chip">Reason: Position filled</span>
+        <button class="btn btn-primary mt-s" style="font-size:15px;padding:13px" onclick="go('feed')">Find similar jobs nearby</button>
+      </div>`;
+    }
+    document.getElementById('trackEta').textContent = state.outcome==='offer'?'You have an offer — respond soon!':'Decision posted. Similar jobs are waiting.';
+  } else {
+    ow.innerHTML='';
+    document.getElementById('trackEta').textContent='Most employers respond within 48 hours.';
+  }
+}
+function fakeTime(i){
+  const t=['Today, 9:14 AM','Today, 10:02 AM','Today, 1:30 PM','Yesterday','Yesterday'];
+  return t[i]||'';
+}
+function advanceStage(){
+  if(state.stage<5){
+    state.stage++;
+    if(state.stage===5){ state.outcome = Math.random()>0.45?'offer':'reject'; }
+    renderTracker();
+    const labels=['','Resume received!','Now in review','Advanced to second-stage review!','🎉 Interview requested!', state.outcome==='offer'?'Offer extended!':'Decision posted'];
+    toast(labels[state.stage]||'Status updated');
+  } else {
+    toast('Application complete');
+  }
+}
+function resetStage(){ state.stage=1; renderTracker(); toast('Reset to Submitted'); }
+
+/* ============================================================
+   APPLICATIONS + SAVED LISTS
+============================================================ */
+function renderApps(){
+  const list=document.getElementById('appsList');
+  if(state.applied.length===0){
+    list.innerHTML=emptyState('No applications yet','Apply to a job and track every step here.','feed','Browse jobs');
+    return;
+  }
+  list.innerHTML = state.applied.map(a=>{
+    const j=JOBS.find(x=>x.id===a.jobId);
+    const isTrack = a.jobId===state.trackJob;
+    const stg = isTrack?state.stage:a.stage;
+    const offer = isTrack && state.stage>=5 && state.outcome==='offer';
+    const label = offer?'Offer':STAGES[Math.min(stg,4)];
+    const cls = offer?'st-offer':'st-active';
+    return `<div class="list-item" onclick="state.trackJob=${j.id};${isTrack?'':'state.stage=2;'}go('tracker')">
+      <div class="li-ico" style="background:${j.color}">${initials(j.co)}</div>
+      <div><h4>${j.title}</h4><div class="sub">${j.co} · ${j.city}</div></div>
+      <span class="li-status ${cls}">${label}</span>
+    </div>`;
+  }).join('') + '<div style="height:14px"></div>';
+}
+function renderSaved(){
+  const list=document.getElementById('savedList');
+  const arr=[...state.saved];
+  if(arr.length===0){
+    list.innerHTML=emptyState('No saved jobs','Tap the bookmark on any job to save it for later.','feed','Browse jobs');
+    return;
+  }
+  list.innerHTML = arr.map(id=>{
+    const j=JOBS.find(x=>x.id===id);
+    return `<div class="list-item" onclick="openJob(${j.id})">
+      <div class="li-ico" style="background:${j.color}">${initials(j.co)}</div>
+      <div><h4>${j.title}</h4><div class="sub">${j.co} · $${j.low}–$${j.high}/hr · ${j.dist} mi</div></div>
+      <button class="save-btn saved" onclick="event.stopPropagation();state.saved.delete(${j.id});renderSaved();toast('Removed')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M5 3v18l7-5 7 5V3z"/></svg>
+      </button>
+    </div>`;
+  }).join('') + '<div style="height:14px"></div>';
+}
+function emptyState(h,p,goId,btn){
+  return `<div class="empty">
+    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c2cdd9" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <h3>${h}</h3><p>${p}</p>
+    <button class="btn btn-primary" style="margin-top:18px;max-width:200px" onclick="go('${goId}')">${btn}</button>
+  </div>`;
+}
+function initials(s){return s.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+
+/* ============================================================
+   AI RESUME
+============================================================ */
+function genResume(){
+  const title=document.getElementById('aiTitle').value;
+  const years=document.getElementById('aiYears').value;
+  const skills=document.getElementById('aiSkills').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const certs=document.getElementById('aiCerts').value;
+  const out=document.getElementById('aiOut');
+  out.innerHTML=`
+    <h4>Professional summary</h4>
+    <p>Reliable ${title} with ${years}+ years of hands-on experience in fast-paced warehouse and industrial settings. Known for safety, accuracy, and showing up ready to work. Comfortable with ${skills.slice(0,3).join(', ')} and eager to grow into a permanent role.</p>
+    <h4>Core skills</h4>
+    <ul>${skills.map(s=>`<li>${s}</li>`).join('')}</ul>
+    <h4>Certifications</h4>
+    <p>${certs||'—'}</p>
+    <h4>Experience</h4>
+    <p><b>${title}</b> — Local Distribution & Manufacturing<br><span style="color:var(--ink-2)">${years} years</span></p>
+    <ul>
+      <li>Operated equipment safely to pick, stage, and load orders on schedule.</li>
+      <li>Maintained accurate inventory using RF scanners, reducing errors.</li>
+      <li>Recognized for strong attendance and a safety-first mindset.</li>
+    </ul>`;
+  document.getElementById('aiForm').style.display='none';
+  document.getElementById('aiResult').style.display='block';
+  document.querySelector('#airesume .scroll').scrollTop=0;
+}
+function saveResume(){ toast('Resume saved & set as default'); go('apply'); }
+
+/* ============================================================
+   SETTINGS / CONSENT / SHEETS
+============================================================ */
+function toggleC(el){ el.classList.toggle('on'); }
+function tsw(el){ el.classList.toggle('on'); }
+function tc(el){ el.classList.toggle('on'); }                 // multi-select chip
+function tcOne(el){                                            // single-select within group
+  [...el.parentElement.children].forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+function updatePay(){
+  let lo=+document.getElementById('payMin').value, hi=+document.getElementById('payMax').value;
+  if(lo>hi){[lo,hi]=[hi,lo];}
+  document.getElementById('payLow').textContent='$'+lo+'/hr';
+  document.getElementById('payHigh').textContent=(hi>=50?'$50+/hr':'$'+hi+'/hr');
+}
+
+const SHEETS={
+  privacy:{h:'Privacy Policy',b:'<p>We collect the information you give us (name, contact details, resume, job preferences) and technical data (device, approximate location) to match you with local jobs and share your application with employers you apply to.</p><p>You control what you share. You can download or delete your data anytime from this screen.</p>'},
+  terms:{h:'Terms & Conditions',b:'<p>Local Job Listings USA is a job listing, matching, and lead-generation platform. We do not employ you and do not guarantee a job, interview, placement, or employer contact.</p><p>Employers and staffing agencies make all final hiring decisions. AI features assist with resumes and recommendations only and never make hiring decisions.</p>'},
+  cookies:{h:'Cookie & tracking preferences',b:'<p>Choose which cookies and tracking technologies we may use. Necessary cookies keep the app working and can\'t be turned off. Analytics and marketing are optional.</p><div style="margin-top:10px"><div class="row" style="padding:12px 0"><div><h4>Necessary</h4><p>Always on</p></div><div class="switch on" style="opacity:.5"><i></i></div></div><div class="row" style="padding:12px 0"><div><h4>Analytics</h4></div><div class="switch on" onclick="tsw(this)"><i></i></div></div><div class="row" style="padding:12px 0;border:none"><div><h4>Marketing</h4></div><div class="switch" onclick="tsw(this)"><i></i></div></div></div>'},
+  dns:{h:'Do Not Sell or Share My Personal Information',b:'<p>You can opt out of the sale or sharing of your personal information for targeted advertising. We\'ll apply your choice across the app.</p><div class="row" style="padding:14px 0;border:none"><div><h4>Opt out of sale/sharing</h4><p>Applies to your account</p></div><div class="switch" onclick="tsw(this)"><i></i></div></div>'},
+  download:{h:'Download my data',b:'<p>We\'ll prepare a copy of your profile, resume, applications, and consent history and email you a secure download link.</p>'},
+  delete:{h:'Delete my account & data',b:'<p>This permanently deletes your profile, resume, applications, and saved jobs. Employers you already applied to may retain records they\'re legally required to keep.</p><p style="color:var(--red-soft);font-weight:600">This cannot be undone.</p>'}
+};
+function sheet(key){
+  const s=SHEETS[key];
+  const action = key==='delete'
+    ? '<button class="btn btn-dark mt" style="background:var(--red-soft)" onclick="closeSheet();toast(\'Deletion request submitted\')">Request deletion</button>'
+    : key==='download'
+    ? '<button class="btn btn-primary mt" onclick="closeSheet();toast(\'We\\\'ll email your data link\')">Request my data</button>'
+    : '<button class="btn btn-primary mt" onclick="closeSheet()">Done</button>';
+  document.getElementById('sheetContent').innerHTML=`
+    <div class="sheet-grab"></div>
+    <h3>${s.h}</h3>
+    ${s.b}
+    <div class="legal-note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0B3B72" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg><span>Placeholder copy for the prototype. Final legal text must be reviewed by qualified counsel before launch.</span></div>
+    ${action}`;
+  document.getElementById('sheetBg').classList.add('show');
+}
+function closeSheet(){ document.getElementById('sheetBg').classList.remove('show'); }
+
+/* ============================================================
+   TOAST + CLOCK
+============================================================ */
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);
+}
+function tick(){
+  const d=new Date();
+  let h=d.getHours(),m=String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent=`${h}:${m}`;
+}
+/* ============================================================
+   ROLE SYSTEM + DATA (added in v0.2)
+============================================================ */
+state.role='seeker';
+state.docTab=0;
+state.coverLetters=[{id:'cl1',title:'Forklift Operator — Distribution Center',date:'May 4',body:''}];
+state.coverReturn='docs';
+state.empJob='e1';
+state.empStage=0;          // selected applicant stage idx
+state.curApplicant=null;
+state.curCandidate=null;
+
+function setRole(r){ state.role=r; state.history=[]; }
+
+/* ---- new sheets (EEO / FCRA) ---- */
+SHEETS.eeo={h:'Non-discrimination policy',b:'<p>Employers and staffing agencies on Local Job Listings USA agree not to discriminate based on race, color, religion, sex, sexual orientation, gender identity, national origin, age, disability, genetic information, or any other characteristic protected by law.</p><p>You may not request protected-class information or filter candidates by it. Violations can remove your account.</p>'};
+SHEETS.bgcheck={h:'Background & drug screens',b:'<p>If you run background or drug screens, you must use an FCRA-compliant flow: clear written disclosure, the applicant\'s written authorization, and a proper pre-adverse / adverse-action notice sequence before any decision.</p><p>This is a placeholder. The screening integration and these required steps must be built and reviewed by counsel before launch.</p>'};
+
+/* ============================================================
+   ROUTER + ROLE NAV (extends go())
+============================================================ */
+function route(id){
+  const map={
+    'docs':()=>renderDocs(state.docTab),
+    'emp-dash':renderEmpHome,'emp-applicants':renderEmpPipe,'emp-applicant':renderEmpApplicant,'emp-billing':renderEmpBilling,
+    'ag-dash':renderAgHome,'ag-orders':renderAgOrders,'ag-pipeline':renderAgPipe,'ag-candidate':renderAgCandidate,'ag-recruiters':renderAgRecruiters,'ag-billing':renderAgBilling,
+    'admin-dash':renderAdminQueue,'admin-accounts':()=>renderAdminAcc(state.adminAcc||0),'admin-jobs':()=>renderAdminJobs(state.adminJob||0),'admin-logs':()=>renderAdminLogs(state.adminLog||0)
+  };
+  if(map[id]) map[id]();
+}
+function tabBtn(target,label,icon,on){
+  return `<button class="tab ${on?'on':''}" onclick="go('${target}')"><span class="ndot"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></span>${label}</button>`;
+}
+const IC={home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  briefcase:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  people:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  shield:'<path d="M12 2l9 4v6c0 5-3.8 8.5-9 10-5.2-1.5-9-5-9-10V6z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  doc:'<path d="M14 3v5h5"/><path d="M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>'};
+
+function empNav(id){
+  const g={'emp-dash':'h','emp-post':'h','emp-applicants':'a','emp-applicant':'a','emp-messages':'m','emp-account':'ac','emp-billing':'ac','emp-profile':'ac'}[id]||'h';
+  return tabBtn('emp-dash','Home',IC.home,g==='h')+tabBtn('emp-applicants','Applicants',IC.people,g==='a')+tabBtn('emp-messages','Messages',IC.msg,g==='m')+tabBtn('emp-account','Account',IC.user,g==='ac');
+}
+function agNav(id){
+  const g={'ag-dash':'h','ag-post':'h','ag-orders':'o','ag-pipeline':'c','ag-candidate':'c','ag-recruiters':'t','ag-account':'ac','ag-billing':'ac','ag-profile':'ac'}[id]||'h';
+  return tabBtn('ag-dash','Home',IC.home,g==='h')+tabBtn('ag-orders','Orders',IC.briefcase,g==='o')+tabBtn('ag-pipeline','Candidates',IC.people,g==='c')+tabBtn('ag-recruiters','Team',IC.grid,g==='t')+tabBtn('ag-account','Account',IC.user,g==='ac');
+}
+function adminNav(id){
+  return tabBtn('admin-dash','Overview',IC.shield,id==='admin-dash')+tabBtn('admin-accounts','Accounts',IC.people,id==='admin-accounts')+tabBtn('admin-jobs','Jobs',IC.briefcase,id==='admin-jobs')+tabBtn('admin-logs','Logs',IC.list,id==='admin-logs');
+}
+function mountNav(id){
+  const el=document.getElementById(id); if(!el) return;
+  const bar=el.querySelector('.tabbar'); if(!bar) return;
+  if(id.startsWith('emp-')) bar.innerHTML=empNav(id);
+  else if(id.startsWith('ag-')) bar.innerHTML=agNav(id);
+  else if(id.startsWith('admin-')) bar.innerHTML=adminNav(id);
+}
+
+/* ============================================================
+   JOB SEEKER — COVER LETTERS + DOCUMENTS
+============================================================ */
+function selCover(el,mode){
+  document.querySelectorAll('#apply .apply-step[data-step="0"] .resume-opt').forEach(o=>{
+    if(o.id&&o.id.startsWith('clOpt')) o.classList.remove('sel');
+  });
+  // mark within cover group only
+  const group=[document.getElementById('clOptNone'),document.getElementById('clOptAI'),el].filter(Boolean);
+  document.getElementById('clOptNone').classList.remove('sel');
+  document.getElementById('clOptAI').classList.remove('sel');
+  el.classList.add('sel');
+  state.applyCover=mode;
+  if(mode==='ai'){ state.coverReturn='apply'; const j=JOBS.find(x=>x.id===state.currentJob); if(j){document.getElementById('clTitle').value=j.title;document.getElementById('clCompany').value=j.co;} openCover('job'); }
+  if(mode==='saved') toast('Attached saved cover letter');
+}
+function openCover(src){
+  state.coverReturn = src==='apply'?'apply':'docs';
+  document.getElementById('clBack').setAttribute('onclick',`go('${state.coverReturn}')`);
+  document.getElementById('clForm').style.display='block';
+  document.getElementById('clResult').style.display='none';
+  if(src!=='job'){ document.getElementById('clTitle').value=''; document.getElementById('clCompany').value=''; }
+  go('coverletter');
+}
+function genCover(){
+  const t=document.getElementById('clTitle').value||'the role';
+  const c=document.getElementById('clCompany').value;
+  const h=document.getElementById('clHighlight').value;
+  const greet = c?`Dear ${c} Hiring Team,`:'Dear Hiring Team,';
+  const body=`${greet}
+
+I'm excited to apply for the ${t} position. I'm a reliable, safety-minded worker with hands-on warehouse and forklift experience, and I take pride in showing up ready to work every shift.
+
+${h?h.charAt(0).toUpperCase()+h.slice(1)+'. ':''}I'm comfortable with picking, staging, and loading, and I work well on a team. I'd welcome the chance to bring that same dependability to your team.
+
+Thank you for your time and consideration.
+
+Sincerely,
+Marcus Reed`;
+  document.getElementById('clOut').innerText=body;
+  document.getElementById('clForm').style.display='none';
+  document.getElementById('clResult').style.display='block';
+  document.querySelector('#coverletter .scroll').scrollTop=0;
+}
+function saveCover(){
+  const t=document.getElementById('clTitle').value||'Cover letter';
+  const c=document.getElementById('clCompany').value;
+  state.coverLetters.unshift({id:'cl'+Date.now(),title:`${t}${c?' — '+c:''}`,date:'Just now',body:document.getElementById('clOut').innerText});
+  toast('Cover letter saved');
+  go(state.coverReturn==='apply'?'apply':'docs');
+}
+function docTab(i,btn){
+  state.docTab=i;
+  [...btn.parentElement.children].forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderDocs(i);
+}
+function renderDocs(i){
+  const b=document.getElementById('docsBody');
+  if(i===0){
+    b.innerHTML=`<div style="height:8px"></div>
+      <div class="doc-item" onclick="toast('Opens resume')"><div class="d-ico" style="background:var(--blue-tint);color:var(--blue)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M14 3l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div><div><h4>Marcus_Reed_Resume.pdf</h4><div class="d-sub">Uploaded May 2 · default</div></div></div>
+      <div class="add-doc" onclick="go('airesume')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg> Build / edit resume with AI</div>
+      <div class="add-doc" onclick="toast('File picker')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Upload a new resume</div>`;
+  } else if(i===1){
+    b.innerHTML=`<div style="height:8px"></div>`+
+      state.coverLetters.map(cl=>`<div class="doc-item" onclick="toast('Opens cover letter')"><div class="d-ico" style="background:#eef4fb;color:var(--blue)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><h4>${cl.title}</h4><div class="d-sub">Saved ${cl.date}</div></div></div>`).join('')+
+      `<div class="add-doc" onclick="openCover('')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> New AI cover letter</div>`;
+  } else {
+    const hist=[{t:'Forklift Operator — Cherry Picker',c:'Distribution Center',s:'In review'},{t:'Registered Nurse — Med/Surg',c:'Regional Hospital Network',s:'Submitted'},{t:'Welder — MIG/TIG',c:'Fabrication Shop',s:'Not selected'}];
+    b.innerHTML=`<div style="height:8px"></div>`+hist.map(x=>`<div class="list-item" onclick="go('apps')"><div class="li-ico" style="background:#11539E">${initials(x.c)}</div><div><h4>${x.t}</h4><div class="sub">${x.c}</div></div><span class="li-status ${x.s==='Not selected'?'sd-closed':'st-active'}" style="margin-left:auto">${x.s}</span></div>`).join('');
+  }
+  b.innerHTML+='<div style="height:20px"></div>';
+}
+
+/* ============================================================
+   EMPLOYER DATA + RENDERERS
+============================================================ */
+const EMP_STAGES=["New applicant","Resume received","In review","Second-stage review","Interview requested","Offer extended","Hired","Not selected"];
+const REJECT_REASONS=["Position filled","Experience mismatch","Certification/license required","Schedule mismatch","Location/commute mismatch","Employer selected another candidate","Other neutral reason"];
+const EMP_JOBS=[
+  {id:'e1',title:'Forklift Operator',type:'Temp-to-hire',shift:'1st & 2nd',low:19,high:23,status:'active',openings:4,nw:5,total:9},
+  {id:'e2',title:'Shipping & Receiving Clerk',type:'Full-time',shift:'1st',low:16,high:20,status:'active',openings:2,nw:2,total:6},
+  {id:'e3',title:'General Labor — Production',type:'Full-time',shift:'All',low:15,high:18,status:'paused',openings:8,nw:0,total:2}
+];
+let APPLICANTS=[
+  {id:'a1',job:'e1',name:'Marcus Reed',loc:'Chicago, IL · 4 mi',match:92,stage:2,color:'#11539E',
+    resume:['3 yrs warehouse / distribution','OSHA forklift certified','RF scanner, pallet jack, cherry picker','Strong attendance record'],
+    cover:'Reliable, safety-minded warehouse worker excited about a temp-to-hire forklift role. Lives nearby and can start this week.',
+    note:'I live 5 minutes away and can start Monday.'},
+  {id:'a2',job:'e1',name:'Tanya Cole',loc:'Cicero, IL · 8 mi',match:81,stage:0,color:'#0f7a37',
+    resume:['2 yrs general warehouse','Forklift trained (sit-down)','Comfortable on 1st or 2nd shift'],cover:'',note:'Open to overtime.'},
+  {id:'a3',job:'e1',name:'Devon Pratt',loc:'Berwyn, IL · 7 mi',match:76,stage:4,color:'#9a6a00',
+    resume:['5 yrs forklift operation','Led a 4-person pick team','Cherry picker + reach truck'],cover:'Experienced operator looking to grow into a lead role.',note:''},
+  {id:'a4',job:'e1',name:'Rosa Iglesias',loc:'Chicago, IL · 3 mi',match:70,stage:1,color:'#7a4fd1',
+    resume:['1 yr warehouse','Eager to certify on forklift','Bilingual EN/ES'],cover:'',note:''},
+  {id:'a5',job:'e2',name:'Jordan Gray',loc:'Chicago, IL · 5 mi',match:84,stage:0,color:'#c0392b',
+    resume:['Shipping/receiving clerk 3 yrs','Inventory + RF scanners','Detail oriented'],cover:'',note:'Available immediately.'},
+  {id:'a6',job:'e2',name:'Bao Tran',loc:'Oak Park, IL · 6 mi',match:79,stage:2,color:'#0a7e8c',
+    resume:['Clerical + logistics 4 yrs','Climate-controlled DC experience'],cover:'Organized clerk who keeps accurate records.',note:''}
+];
+function empJob(){ return EMP_JOBS.find(j=>j.id===state.empJob)||EMP_JOBS[0]; }
+function empCardHTML(j){
+  const sd={active:'sd-active',paused:'sd-paused',pending:'sd-pending',closed:'sd-closed'}[j.status];
+  return `<div class="mgr-card" onclick="state.empJob='${j.id}';go('emp-applicants')">
+    <div class="top"><div><h3>${j.title}</h3><div class="co">$${j.low}–$${j.high}/hr · ${j.type} · ${j.shift} shift</div></div>
+    <span class="status-dot ${sd}">${j.status}</span></div>
+    <div class="mgr-stats">
+      <div><b>${j.total}</b><small>Applicants</small></div>
+      <div><b style="color:var(--blue)">${j.nw}</b><small>New</small></div>
+      <div><b>${j.openings}</b><small>Openings</small></div>
+    </div></div>`;
+}
+function renderEmpHome(){ document.getElementById('empJobsHome').innerHTML=EMP_JOBS.map(empCardHTML).join(''); }
+
+function renderEmpPipe(){
+  const j=empJob();
+  document.getElementById('empPipeTitle').textContent=j.title;
+  const list=APPLICANTS.filter(a=>a.job===j.id);
+  const tabs=document.getElementById('empPipeTabs');
+  const stagesShown=[0,1,2,3,4,5,6,7];
+  const active=state.empPipeStage??-1;
+  tabs.innerHTML=`<div class="pipe-tab ${active===-1?'on':''}" onclick="state.empPipeStage=-1;renderEmpPipe()">All <span class="cnt">${list.length}</span></div>`+
+    stagesShown.map(s=>{const c=list.filter(a=>a.stage===s).length; if(c===0&&s>5) return ''; return `<div class="pipe-tab ${active===s?'on':''}" onclick="state.empPipeStage=${s};renderEmpPipe()">${EMP_STAGES[s]} <span class="cnt">${c}</span></div>`;}).join('');
+  const shown=active===-1?list:list.filter(a=>a.stage===active);
+  const el=document.getElementById('empPipeList');
+  el.innerHTML=(shown.length?shown.map(empAppCardHTML).join(''):`<div class="empty"><h3>No applicants here</h3><p>Move applicants into this stage from their profile.</p></div>`)+'<div style="height:80px"></div>';
+}
+function empAppCardHTML(a){
+  return `<div class="app-card" onclick="openApplicant('${a.id}')">
+    <div class="app-av" style="background:${a.color}">${initials(a.name)}</div>
+    <div><h4>${a.name}</h4><div class="meta">${a.loc}</div><span class="match">★ ${a.match}% match</span></div>
+    <div class="app-stage"><div class="s-label">${EMP_STAGES[a.stage]}</div></div>
+  </div>`;
+}
+function openApplicant(id){
+  state.curApplicant=id; state.empDocTab=0;
+  renderEmpApplicant(); go('emp-applicant');
+}
+function renderEmpApplicant(){
+  const a=APPLICANTS.find(x=>x.id===state.curApplicant); if(!a) return;
+  const dt=state.empDocTab||0;
+  const docHTML = dt===0
+    ? `<div class="doc-view"><h5>Summary</h5>${a.resume.map(r=>`<div class="li" style="margin-bottom:6px"><span class="dot"></span><span>${r}</span></div>`).join('')}</div>`
+    : dt===1
+    ? `<div class="doc-view">${a.cover?a.cover:'<span style="color:var(--ink-2)">No cover letter attached.</span>'}</div>`
+    : `<div class="doc-view">${a.note?a.note:'<span style="color:var(--ink-2)">No note from applicant.</span>'}</div>`;
+  const isReject=a.stage===7;
+  document.getElementById('empApplicantBody').innerHTML=`
+    <div class="pad">
+      <div style="display:flex;gap:13px;align-items:center">
+        <div class="app-av" style="background:${a.color};width:56px;height:56px;font-size:20px">${initials(a.name)}</div>
+        <div><h1 style="font-size:24px">${a.name}</h1><div class="helper">${a.loc}</div><span class="match" style="margin-top:5px">★ ${a.match}% match</span></div>
+      </div>
+      <div class="ai-fit" style="margin-top:14px"><div class="ai-h"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#11539E" stroke-width="2"><path d="M12 3l1.8 4.8L18 9l-4.2 1.2L12 15l-1.8-4.8L6 9l4.2-1.2z"/></svg> AI fit summary</div><p>Profile aligns with your role's shift and experience needs. Review the resume to confirm.</p><p class="ai-disc">AI explains fit only. It never ranks, scores out, or rejects candidates — you decide.</p></div>
+
+      <div class="doc-tab">
+        <button class="${dt===0?'on':''}" onclick="state.empDocTab=0;renderEmpApplicant()">Resume</button>
+        <button class="${dt===1?'on':''}" onclick="state.empDocTab=1;renderEmpApplicant()">Cover letter</button>
+        <button class="${dt===2?'on':''}" onclick="state.empDocTab=2;renderEmpApplicant()">Note</button>
+      </div>
+      ${docHTML}
+
+      <div class="blk-label">Move to stage</div>
+      <div class="stage-picker">
+        ${EMP_STAGES.map((s,i)=>`<div class="stage-opt ${i===7?'danger':''} ${a.stage===i?'on':''}" onclick="setApplicantStage('${a.id}',${i})">${s}</div>`).join('')}
+      </div>
+      ${isReject?`<div class="agree-box" style="margin-top:14px"><h4>Reason (safe categories only)</h4><div class="stage-picker" style="margin-top:6px">${REJECT_REASONS.map(r=>`<div class="stage-opt ${a.reason===r?'on':''}" onclick="setReject('${a.id}','${r.replace(/'/g,"")}')">${r}</div>`).join('')}</div><p style="margin-top:8px">Discriminatory reasons are not available. The applicant only sees a neutral category.</p></div>`:''}
+
+      <button class="btn btn-primary mt" onclick="toast('Opens secure message thread')">Message ${a.name.split(' ')[0]}</button>
+      <button class="btn btn-ghost mt-s" onclick="toast('Resume exported')">Export applicant</button>
+      <div class="disclaimer mt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>You make the hiring decision. Don't base it on protected characteristics. AI does not auto-advance or reject anyone.</span></div>
+      <div style="height:20px"></div>
+    </div>`;
+}
+function setApplicantStage(id,i){
+  const a=APPLICANTS.find(x=>x.id===id); a.stage=i; if(i!==7) a.reason=null;
+  renderEmpApplicant(); toast('Moved to: '+EMP_STAGES[i]);
+}
+function setReject(id,r){ const a=APPLICANTS.find(x=>x.id===id); a.reason=r; renderEmpApplicant(); toast('Reason set: '+r); }
+
+function renderEmpBilling(){
+  document.getElementById('empBilling').innerHTML=billingCards([
+    {name:'Free',price:'$0',tag:'',feats:['1 active job post','Up to 10 applicants/mo','Basic applicant pipeline'],cur:true,c:'var(--blue)'},
+    {name:'Pro Monthly',price:'$149/mo',tag:'Most popular',feats:['Unlimited active posts','Full pipeline & messaging','Export applicants','Team members'],c:'var(--blue)'},
+    {name:'Pay-per-applicant',price:'$12 / lead',tag:'',feats:['Pay only for unlocked qualified applicants','No monthly commitment','Great for one-off hiring'],c:'var(--hivis-deep)'},
+    {name:'Featured / Urgent',price:'+$39 / post',tag:'Add-on',feats:['Top of the feed','🔥 Urgent badge','3x more views (typical)'],c:'#c0392b'}
+  ]);
+}
+
+/* ============================================================
+   AGENCY DATA + RENDERERS
+============================================================ */
+const RECRUITERS=[{id:'r1',name:'Sam Ortiz',br:'Chicago'},{id:'r2',name:'Lena Park',br:'Chicago'},{id:'r3',name:'Marcus Bell',br:'Aurora'}];
+const AG_ORDERS=[
+  {id:'o1',title:'Warehouse Associate',client:'Confidential — Logistics',branch:'Chicago',type:'Temp-to-hire',low:18,high:21,openings:6,filled:2,cands:14,urgent:true},
+  {id:'o2',title:'Machine Operator',client:'Precision Parts Co.',branch:'Aurora',type:'Temp',low:19,high:24,openings:4,filled:1,cands:9,urgent:false},
+  {id:'o3',title:'CNA — Long-term Care',client:'Confidential — Healthcare',branch:'Chicago',type:'Direct hire',low:20,high:26,openings:3,filled:0,cands:7,urgent:true},
+  {id:'o4',title:'Picker / Packer',client:'Midwest Fulfillment',branch:'Aurora',type:'Contract',low:16,high:19,openings:10,filled:4,cands:21,urgent:false}
+];
+const AG_STAGES=["New","Screening","Submitted to client","Interview","Offer","Placed","Not selected"];
+let AG_CANDS=[
+  {id:'c1',order:'o1',name:'Andre Wallace',loc:'Chicago · 6 mi',stage:1,assigned:'r1',color:'#11539E',type:'Temp-to-hire'},
+  {id:'c2',order:'o1',name:'Mei Lin',loc:'Cicero · 9 mi',stage:2,assigned:'r2',color:'#0f7a37',type:'Temp-to-hire'},
+  {id:'c3',order:'o1',name:'Kofi Mensah',loc:'Berwyn · 7 mi',stage:0,assigned:null,color:'#9a6a00',type:'Temp-to-hire'},
+  {id:'c4',order:'o2',name:'Sara Beck',loc:'Aurora · 3 mi',stage:3,assigned:'r3',color:'#7a4fd1',type:'Temp'},
+  {id:'c5',order:'o3',name:'Grace Okoro',loc:'Chicago · 4 mi',stage:1,assigned:null,color:'#c0392b',type:'Direct hire'}
+];
+function recruiterName(id){ const r=RECRUITERS.find(x=>x.id===id); return r?r.name:null; }
+function agOrder(){ return AG_ORDERS.find(o=>o.id===state.agOrder)||AG_ORDERS[0]; }
+function agOrderCardHTML(o){
+  return `<div class="mgr-card" onclick="state.agOrder='${o.id}';go('ag-pipeline')">
+    <div class="top"><div><h3>${o.title}</h3><div class="co">${o.client} · ${o.branch} branch</div></div>
+    ${o.urgent?'<span class="status-dot" style="background:#FFEBEB;color:#C0392B;margin-left:auto">🔥 Urgent</span>':''}</div>
+    <div class="job-meta" style="margin-top:11px"><span class="tag">$${o.low}–$${o.high}/hr</span><span class="tag">${o.type}</span></div>
+    <div class="mgr-stats"><div><b>${o.cands}</b><small>Candidates</small></div><div><b style="color:#0f7a37">${o.filled}/${o.openings}</b><small>Filled</small></div><div><b>${o.openings-o.filled}</b><small>Open</small></div></div></div>`;
+}
+function renderAgHome(){ document.getElementById('agOrdersHome').innerHTML=AG_ORDERS.map(agOrderCardHTML).join(''); }
+function renderAgOrders(){ document.getElementById('agOrdersList').innerHTML=AG_ORDERS.map(agOrderCardHTML).join('')+'<div style="height:80px"></div>'; }
+function renderAgPipe(){
+  const o=agOrder();
+  document.getElementById('agPipeTitle').textContent=o.title;
+  const list=AG_CANDS.filter(c=>c.order===o.id);
+  const active=state.agPipeStage??-1;
+  const tabs=document.getElementById('agPipeTabs');
+  tabs.innerHTML=`<div class="pipe-tab ag ${active===-1?'on':''}" onclick="state.agPipeStage=-1;renderAgPipe()">All <span class="cnt">${list.length}</span></div>`+
+    AG_STAGES.map((s,i)=>{const c=list.filter(x=>x.stage===i).length; if(c===0&&i>4) return ''; return `<div class="pipe-tab ag ${active===i?'on':''}" onclick="state.agPipeStage=${i};renderAgPipe()">${s} <span class="cnt">${c}</span></div>`;}).join('');
+  const shown=active===-1?list:list.filter(c=>c.stage===active);
+  document.getElementById('agPipeList').innerHTML=(shown.length?shown.map(agCandCardHTML).join(''):`<div class="empty"><h3>No candidates here</h3></div>`)+'<div style="height:80px"></div>';
+}
+function agCandCardHTML(c){
+  const rn=recruiterName(c.assigned);
+  return `<div class="app-card" onclick="openCandidate('${c.id}')">
+    <div class="app-av" style="background:${c.color}">${initials(c.name)}</div>
+    <div><h4>${c.name}</h4><div class="meta">${c.loc} · ${c.type}</div>
+      ${rn?`<div class="assigned"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg> ${rn}</div>`:'<span class="match" style="background:#FFF3D1;color:#9a6a00;margin-top:4px">Unassigned</span>'}</div>
+    <div class="app-stage"><div class="s-label">${AG_STAGES[c.stage]}</div></div>
+  </div>`;
+}
+function openCandidate(id){ state.curCandidate=id; renderAgCandidate(); go('ag-candidate'); }
+function renderAgCandidate(){
+  const c=AG_CANDS.find(x=>x.id===state.curCandidate); if(!c) return;
+  document.getElementById('agCandidateBody').innerHTML=`
+    <div class="pad">
+      <div style="display:flex;gap:13px;align-items:center">
+        <div class="app-av" style="background:${c.color};width:56px;height:56px;font-size:20px">${initials(c.name)}</div>
+        <div><h1 style="font-size:24px">${c.name}</h1><div class="helper">${c.loc} · ${c.type}</div></div>
+      </div>
+
+      <div class="blk-label">Assign to recruiter</div>
+      <div class="stage-picker">
+        <div class="stage-opt ${!c.assigned?'on':''}" onclick="assignRec('${c.id}',null)">Unassigned</div>
+        ${RECRUITERS.map(r=>`<div class="stage-opt ${c.assigned===r.id?'on':''}" onclick="assignRec('${c.id}','${r.id}')">${r.name} · ${r.br}</div>`).join('')}
+      </div>
+
+      <div class="blk-label">Pipeline stage</div>
+      <div class="stage-picker">
+        ${AG_STAGES.map((s,i)=>`<div class="stage-opt ${i===6?'danger':''} ${c.stage===i?'on':''}" onclick="setCandStage('${c.id}',${i})">${s}</div>`).join('')}
+      </div>
+
+      <div class="blk-label">Internal notes</div>
+      <div class="note-internal"><div class="lbl"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Agency only</div>Strong attendance in prior temp role. Confirm reliable transport for 1st shift. Never shown to candidate or client.</div>
+
+      <button class="btn mt" style="background:#0f7a37;color:#fff" onclick="toast('Opens message thread')">Message ${c.name.split(' ')[0]}</button>
+      <button class="btn btn-ghost mt-s" onclick="toast('Submitted to client')">Submit to client</button>
+      <div class="disclaimer mt"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Source and screen without using protected characteristics. The client makes the final hiring decision.</span></div>
+      <div style="height:20px"></div>
+    </div>`;
+}
+function assignRec(id,rid){ const c=AG_CANDS.find(x=>x.id===id); c.assigned=rid; renderAgCandidate(); toast(rid?'Assigned to '+recruiterName(rid):'Unassigned'); }
+function setCandStage(id,i){ const c=AG_CANDS.find(x=>x.id===id); c.stage=i; renderAgCandidate(); toast('Stage: '+AG_STAGES[i]); }
+function renderAgRecruiters(){
+  document.getElementById('agRecruiters').innerHTML=RECRUITERS.map(r=>{
+    const load=AG_CANDS.filter(c=>c.assigned===r.id).length;
+    return `<div class="doc-item"><div class="d-ico" style="background:var(--green-tint);color:#0f7a37">${initials(r.name)}</div><div><h4>${r.name}</h4><div class="d-sub">${r.br} branch · ${load} candidate${load===1?'':'s'} assigned</div></div></div>`;
+  }).join('')+`<div class="add-doc" style="color:#0f7a37" onclick="toast('Invite recruiter — placeholder')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg> Invite recruiter / add seat</div><p class="demo-note" style="padding:6px 24px 24px">Recruiter seats are a placeholder for the agency plan.</p>`;
+}
+function renderAgBilling(){
+  document.getElementById('agBilling').innerHTML=billingCards([
+    {name:'Starter',price:'$0',feats:['1 branch','1 recruiter seat','3 active job orders'],cur:true,c:'#0f7a37'},
+    {name:'Agency',price:'$399/mo',tag:'Most popular',feats:['Unlimited job orders','5 recruiter seats','Multi-branch','Assign & pipeline tools'],c:'#0f7a37'},
+    {name:'Agency Plus',price:'$899/mo',tag:'',feats:['15 recruiter seats','Priority placement','Lead unlock credits included'],c:'#0f7a37'},
+    {name:'Per-seat add-on',price:'+$49 / seat',tag:'Add-on',feats:['Add recruiters anytime','Scales with your team'],c:'var(--hivis-deep)'}
+  ]);
+}
+
+/* shared billing card builder */
+function billingCards(plans){
+  return plans.map(p=>`<div class="mgr-card" style="margin:0 0 14px;cursor:default;border-top:4px solid ${p.c}">
+    <div class="top"><div><h3>${p.name}</h3><div class="co" style="font-family:'Barlow Condensed';font-size:22px;color:var(--ink);font-weight:700;margin-top:2px">${p.price}</div></div>
+    ${p.tag?`<span class="status-dot sd-pending" style="margin-left:auto">${p.tag}</span>`:''}${p.cur?'<span class="status-dot sd-active" style="margin-left:auto">Current</span>':''}</div>
+    <div style="margin-top:12px">${p.feats.map(f=>`<div class="li" style="margin-bottom:7px"><span class="dot" style="background:${p.c}"></span><span>${f}</span></div>`).join('')}</div>
+    ${p.cur?'':`<button class="btn btn-primary" style="margin-top:6px;background:${p.c}" onclick="toast('Stripe checkout — placeholder')">Choose ${p.name}</button>`}
+  </div>`).join('')+`<div class="disclaimer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7a5a10" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Billing is a placeholder. Stripe integration and tax/receipt handling come later.</span></div><div style="height:20px"></div>`;
+}
+
+/* ============================================================
+   ADMIN RENDERERS
+============================================================ */
+const ADMIN_QUEUE=[
+  {type:'job',title:'Forklift Operator',by:'Lakeside Distribution',flag:null,reason:'New post awaiting review'},
+  {type:'job',title:'$50/hr easy work from home!!',by:'QuickCash LLC',flag:'Possible scam',reason:'Pay looks misleading · no address'},
+  {type:'employer',title:'Apex Manufacturing',by:'Account verification',flag:null,reason:'New employer · verify business'},
+  {type:'job',title:'Warehouse — must be under 30',by:'FastShip Co.',flag:'Discriminatory language',reason:'Age restriction in title'},
+  {type:'agency',title:'BlueRiver Staffing',by:'Account verification',flag:null,reason:'New agency · verify partner'}
+];
+function renderAdminQueue(){
+  document.getElementById('adminQueue').innerHTML=ADMIN_QUEUE.map((m,i)=>{
+    const ic=m.type==='job'?IC.briefcase:m.type==='employer'?'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>':IC.people;
+    return `<div class="mod-card">
+      <div class="top"><div class="r-ico" style="background:#eef1f5;color:#42536a;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ic}</svg></div>
+        <div><h4>${m.title}</h4><div class="meta">${m.by}</div></div>
+        ${m.flag?`<span class="flag-tag" style="margin-left:auto">⚑ ${m.flag}</span>`:''}</div>
+      <p class="meta" style="margin-top:9px">${m.reason}</p>
+      <div class="mod-actions">
+        <button class="mini-btn mb-approve" onclick="modAct(${i},'Approved')">${m.type==='job'?'Approve':'Verify'}</button>
+        <button class="mini-btn mb-neutral" onclick="modAct(${i},'Paused')">Pause</button>
+        <button class="mini-btn mb-reject" onclick="modAct(${i},'Removed')">${m.type==='job'?'Remove':'Reject'}</button>
+      </div></div>`;
+  }).join('')+'<div style="height:70px"></div>';
+}
+function modAct(i,action){ toast(action+': '+ADMIN_QUEUE[i].title); ADMIN_QUEUE.splice(i,1); renderAdminQueue(); }
+
+const ADMIN_ACCOUNTS=[
+  [ {n:'Marcus Reed',m:'Chicago, IL · applied 6 jobs',s:'active'},{n:'Tanya Cole',m:'Cicero, IL · applied 3 jobs',s:'active'},{n:'Jordan Gray',m:'Reported by employer',s:'flagged'} ],
+  [ {n:'Lakeside Distribution',m:'Chicago, IL · 3 posts',s:'verified'},{n:'Apex Manufacturing',m:'Aurora, IL · new',s:'pending'},{n:'QuickCash LLC',m:'No address · suspicious',s:'flagged'} ],
+  [ {n:'FrontLine Staffing',m:'2 branches · 8 orders',s:'verified'},{n:'BlueRiver Staffing',m:'New partner',s:'pending'} ]
+];
+function adminAccTab(i,btn){ state.adminAcc=i; [...btn.parentElement.children].forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderAdminAcc(i); }
+function renderAdminAcc(i){
+  const tag={active:'sd-active',verified:'sd-active',pending:'sd-pending',flagged:'sd-paused'};
+  const canModerate=i>0;
+  document.getElementById('adminAccList').innerHTML='<div style="height:8px"></div>'+ADMIN_ACCOUNTS[i].map((a,idx)=>`
+    <div class="mod-card"><div class="top"><div class="app-av" style="background:#11539E;width:40px;height:40px;font-size:15px">${initials(a.n)}</div>
+      <div><h4>${a.n}</h4><div class="meta">${a.m}</div></div>
+      <span class="status-dot ${tag[a.s]||'sd-closed'}" style="margin-left:auto">${a.s}</span></div>
+    ${canModerate&&a.s!=='verified'?`<div class="mod-actions"><button class="mini-btn mb-approve" onclick="toast('Approved ${a.n}')">Approve</button><button class="mini-btn mb-reject" onclick="toast('Rejected ${a.n}')">Reject</button></div>`:''}
+    ${a.s==='flagged'?`<div class="mod-actions"><button class="mini-btn mb-neutral" onclick="toast('Reviewing report')">Review report</button><button class="mini-btn mb-reject" onclick="toast('Suspended ${a.n}')">Suspend</button></div>`:''}
+    </div>`).join('')+'<div style="height:70px"></div>';
+}
+const ADMIN_JOBS_DATA=[
+  [ {t:'Forklift Operator',e:'Lakeside Distribution',m:'$19–23/hr · submitted today'},{t:'CNA — Long-term Care',e:'FrontLine Staffing',m:'$20–26/hr · submitted today'} ],
+  [ {t:'$50/hr easy work from home!!',e:'QuickCash LLC',m:'Misleading pay · no address',flag:1},{t:'Warehouse — must be under 30',e:'FastShip Co.',m:'Discriminatory language',flag:1} ],
+  [ {t:'Shipping & Receiving Clerk',e:'Lakeside Distribution',m:'Live · 6 applicants'},{t:'Machine Operator',e:'FrontLine Staffing',m:'Live · 9 candidates'} ]
+];
+function adminJobTab(i,btn){ state.adminJob=i; [...btn.parentElement.children].forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderAdminJobs(i); }
+function renderAdminJobs(i){
+  document.getElementById('adminJobList').innerHTML='<div style="height:8px"></div>'+ADMIN_JOBS_DATA[i].map(j=>`
+    <div class="mod-card"><div class="top"><div class="r-ico" style="background:#eef1f5;color:#42536a;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${IC.briefcase}</svg></div>
+      <div><h4>${j.t}</h4><div class="meta">${j.e}</div></div>${j.flag?'<span class="flag-tag" style="margin-left:auto">⚑ Flagged</span>':''}</div>
+      <p class="meta" style="margin-top:9px">${j.m}</p>
+      <div class="mod-actions">${i===2?'<button class="mini-btn mb-neutral" onclick="toast(\'Paused\')">Pause</button><button class="mini-btn mb-reject" onclick="toast(\'Removed\')">Remove</button>':'<button class="mini-btn mb-approve" onclick="toast(\'Approved & live\')">Approve</button><button class="mini-btn mb-reject" onclick="toast(\'Removed\')">Remove</button>'}</div>
+    </div>`).join('')+'<div style="height:70px"></div>';
+}
+const ADMIN_LOGS=[
+  [ {c:'#15A34A',t:'Resume share consent',m:'Marcus Reed → Lakeside Distribution',time:'9:14a'},{c:'#15A34A',t:'SMS/TCPA opt-in',m:'Tanya Cole',time:'8:50a'},{c:'#B23B3B',t:'Consent withdrawn',m:'Devon Pratt · resume sharing off',time:'Yest'},{c:'#15A34A',t:'Terms accepted',m:'BlueRiver Staffing (signup)',time:'Yest'} ],
+  [ {c:'#11539E',t:'Job approved',m:'Admin · Forklift Operator',time:'9:20a'},{c:'#11539E',t:'Employer verified',m:'Admin · Lakeside Distribution',time:'9:02a'},{c:'#B23B3B',t:'Job removed',m:'Admin · "work from home" scam',time:'8:30a'},{c:'#9a6a00',t:'Account suspended',m:'Admin · reported user',time:'Yest'} ]
+];
+function adminLogTab(i,btn){ state.adminLog=i; [...btn.parentElement.children].forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderAdminLogs(i); }
+function renderAdminLogs(i){
+  document.getElementById('adminLogList').innerHTML=ADMIN_LOGS[i].map(l=>`<div class="log-row"><div class="dot" style="background:${l.c}"></div><div><div class="lt">${l.t}</div><div class="lm">${l.m}</div></div><div class="time">${l.time}</div></div>`).join('')+`<p class="demo-note" style="padding:16px 24px">${i===0?'Consent':'Audit'} logs are immutable placeholders — wire to your database with timestamps & IP for compliance.</p>`;
+}
+
+
+updatePay();
+syncNav('feed');
+</script>
+</body>
+</html>
