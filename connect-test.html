@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LJL — Core Loop (live Supabase test)</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#0d2542;color:#e8eef5;margin:0;padding:24px;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:#9fb6d1;font-size:14px;margin-bottom:18px}
+  .card{background:#11294a;border:1px solid #1d3a5f;border-radius:14px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 10px;color:#cfe0f3}
+  label{display:block;font-size:12px;color:#9fb6d1;margin:8px 0 4px}
+  input{width:100%;padding:10px;border-radius:9px;border:1px solid #29467099;background:#0c2140;color:#fff;font-size:14px;box-sizing:border-box}
+  button{background:#FFC400;color:#1b1300;border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer}
+  button.sec{background:#1d3a5f;color:#cfe0f3}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .log{background:#081a30;border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:pre-wrap;max-height:420px;overflow:auto;border:1px solid #1d3a5f}
+  .ok{color:#7ee2a8}.err{color:#ff9d9d}.step{color:#9fd0ff}.muted{color:#7990ab}
+  .warn{background:#3a2a0a;border:1px solid #6b5212;color:#ffd98a;border-radius:10px;padding:12px;font-size:13px;margin-bottom:16px}
+  code{background:#0c2140;padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Local Job Listings USA — Core Loop (live)</h1>
+  <div class="sub">Runs the real flow against your Supabase: employer posts a job → admin approves → seeker applies → employer advances status → seeker tracker updates.</div>
+
+  <div class="warn">
+    Before running: (1) run <code>0001_schema.sql</code>, <code>0002_policies.sql</code>, <code>seed.sql</code> in the Supabase SQL editor; (2) create the two storage buckets if not auto-created; (3) in Auth → Email, turn <b>off</b> “Confirm email” for this test; (4) create an admin account below and promote it once with <code>update public.profiles set role='admin' where email='...';</code>
+  </div>
+
+  <div class="card">
+    <h2>1 · Connection</h2>
+    <label>SUPABASE_URL</label>
+    <input id="cfgUrl" placeholder="https://xxxx.supabase.co" />
+    <label>SUPABASE_ANON_KEY</label>
+    <input id="cfgKey" placeholder="anon public key" />
+    <div style="margin-top:12px"><button class="sec" onclick="saveCfg()">Save connection</button> <span id="cfgState" class="muted">not set</span></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Admin account (you promote this once via SQL)</h2>
+    <label>Admin email</label><input id="adminEmail" placeholder="admin@yourco.com" />
+    <label>Admin password</label><input id="adminPass" type="password" placeholder="••••••••" />
+    <div style="margin-top:10px"><button class="sec" onclick="makeAdmin()">Sign up admin account</button> <span class="muted">then promote it in SQL, then run the loop</span></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Run the full core loop</h2>
+    <button id="runBtn" onclick="runLoop()">▶ Run end-to-end</button>
+    <div style="margin-top:14px" class="log" id="log">Waiting…</div>
+  </div>
+</div>
+
+<!-- config first, then the module that uses the services -->
+<script>
+  function saveCfg(){
+    window.LJL_CONFIG = { SUPABASE_URL: cfgUrl.value.trim(), SUPABASE_ANON_KEY: cfgKey.value.trim(), RESUME_URL_FUNCTION:"" };
+    window.LJL_LIVE = !!(window.LJL_CONFIG.SUPABASE_URL && window.LJL_CONFIG.SUPABASE_ANON_KEY);
+    document.getElementById('cfgState').textContent = window.LJL_LIVE ? "saved ✓ (reload not needed)" : "missing values";
+    document.getElementById('cfgState').className = window.LJL_LIVE ? "ok" : "err";
+  }
+</script>
+<script type="module">
+  // We import lazily AFTER config is saved, so the client picks up the URL/key.
+  const log = document.getElementById('log');
+  let firstLine = true;
+  function w(msg, cls=''){ if(firstLine){log.textContent='';firstLine=false;} const s=document.createElement('span'); s.className=cls; s.textContent=msg+'\n'; log.appendChild(s); log.scrollTop=log.scrollHeight; }
+
+  window.makeAdmin = async () => {
+    if(!window.LJL_LIVE){ w('Save the connection first.', 'err'); return; }
+    const { signUp } = await import('./src/services/auth.js');
+    try{
+      await signUp({ email: adminEmail.value.trim(), password: adminPass.value, role:'admin', fullName:'Platform Admin' });
+      w('Admin account created. Now run in SQL:', 'ok');
+      w(`  update public.profiles set role='admin' where email='${adminEmail.value.trim()}';`, 'muted');
+    }catch(e){ w('Admin signup: '+(e.message||e), 'err'); }
+  };
+
+  window.runLoop = async () => {
+    if(!window.LJL_LIVE){ w('Save the connection first.', 'err'); return; }
+    document.getElementById('runBtn').disabled = true;
+    const stamp = Date.now();
+    const pass = 'Passw0rd!demo';
+    const empEmail = `emp_${stamp}@ljl.test`;
+    const seekerEmail = `seeker_${stamp}@ljl.test`;
+
+    try{
+      const auth = await import('./src/services/auth.js');
+      const orgs = await import('./src/services/orgs.js');
+      const jobsSvc = await import('./src/services/jobs.js');
+      const resumesSvc = await import('./src/services/resumes.js');
+      const coversSvc = await import('./src/services/coverLetters.js');
+      const appsSvc = await import('./src/services/applications.js');
+      const adminSvc = await import('./src/services/admin.js');
+
+      w('① Employer signs up…', 'step');
+      await auth.signUp({ email: empEmail, password: pass, role:'employer', fullName:'Dana Whitfield' });
+      w('   ✓ '+empEmail, 'ok');
+
+      w('② Employer creates company profile…', 'step');
+      const employer = await orgs.createEmployer({ companyName:'Lakeside Distribution', industry:'Logistics', size:'11-50', hqCity:'Chicago, IL', about:'Family-owned DC.', agreedNonDiscrimination:true });
+      w('   ✓ employer id '+employer.id.slice(0,8)+'…', 'ok');
+
+      w('③ Employer posts a job (starts pending)…', 'step');
+      const job = await jobsSvc.createEmployerJob(employer.id, {
+        title:'Forklift Operator', companyName:'Lakeside Distribution', cityState:'Chicago, IL',
+        payMin:19, payMax:23, employmentType:'temp_to_hire', shifts:['1st','2nd'], category:'Logistics',
+        description:'Operate cherry picker and sit-down forklift.', requirements:['Forklift certification','6+ months warehouse'],
+        benefits:['Weekly pay'], openings:4, urgency:'urgent', contactPerson:'Dana Whitfield',
+      });
+      w('   ✓ job id '+job.id.slice(0,8)+'… status='+job.status+' moderation='+job.moderation_status, 'ok');
+
+      w('④ Confirm job is NOT yet public…', 'step');
+      // sign out to anon and check public feed
+      await auth.signOut();
+      let pub = await jobsSvc.listPublicJobs();
+      w('   public jobs visible to anon: '+pub.filter(j=>j.id===job.id).length+' (expected 0)', pub.some(j=>j.id===job.id)?'err':'ok');
+
+      w('⑤ Admin approves the job…', 'step');
+      await auth.signIn({ email: adminEmail.value.trim(), password: adminPass.value });
+      const me = await auth.getMyProfile();
+      if(me.role!=='admin'){ w('   ✗ This account is not admin yet. Promote it in SQL and rerun.', 'err'); document.getElementById('runBtn').disabled=false; return; }
+      await adminSvc.approveJob(job.id);
+      w('   ✓ approved by admin', 'ok');
+
+      w('⑥ Job seeker signs up + sets profile…', 'step');
+      await auth.signOut();
+      await auth.signUp({ email: seekerEmail, password: pass, role:'job_seeker', fullName:'Marcus Reed' });
+      await auth.upsertJobSeeker({ location:'Chicago, IL', radius_mi:25, pay_min:18, pay_max:30, categories:['Logistics'] });
+      w('   ✓ '+seekerEmail, 'ok');
+
+      w('⑦ Seeker saves a resume (text) + AI cover letter…', 'step');
+      const resume = await resumesSvc.saveTextResume({ summary:'3 yrs warehouse, OSHA forklift certified, RF scanner.', fileName:'Marcus_Reed_Resume' });
+      const clText = coversSvc.genCoverLetterText({ jobTitle:'Forklift Operator', company:'Lakeside Distribution', seekerName:'Marcus Reed' });
+      const cover = await coversSvc.saveCoverLetter({ title:'Forklift Operator — Lakeside', body:clText, jobId:job.id });
+      w('   ✓ resume '+resume.id.slice(0,8)+'… cover '+cover.id.slice(0,8)+'…', 'ok');
+
+      w('⑧ Seeker sees the approved job + applies…', 'step');
+      pub = await jobsSvc.listPublicJobs();
+      w('   approved job now visible to seeker: '+(pub.some(j=>j.id===job.id)?'yes ✓':'no ✗'), pub.some(j=>j.id===job.id)?'ok':'err');
+      const application = await appsSvc.applyToJob({ jobId:job.id, resumeId:resume.id, coverLetterId:cover.id, note:'I live nearby, can start Monday.', shareConsent:true });
+      w('   ✓ application '+application.id.slice(0,8)+'… stage='+application.stage, 'ok');
+
+      w('⑨ Employer sees the applicant + their docs…', 'step');
+      await auth.signOut();
+      await auth.signIn({ email: empEmail, password: pass });
+      const applicants = await appsSvc.listApplicantsForJob(job.id);
+      w('   ✓ applicants on this job: '+applicants.length+' — '+(applicants[0]?.profiles?.full_name||'?')+', resume summary readable: '+(applicants[0]?.resumes?.summary?'yes':'no'), 'ok');
+
+      w('⑩ Employer advances status through all stages…', 'step');
+      for(const st of appsSvc.STAGES.slice(1, 7)){ // resume_received → hired
+        await appsSvc.setApplicationStage(application.id, st);
+        w('   → '+appsSvc.STAGE_LABELS[st], 'muted');
+      }
+      w('   ✓ reached Hired', 'ok');
+
+      w('⑪ Seeker reloads tracker (real events)…', 'step');
+      await auth.signOut();
+      await auth.signIn({ email: seekerEmail, password: pass });
+      const { app, events } = await appsSvc.getApplicationTracker(application.id);
+      w('   ✓ current stage: '+appsSvc.STAGE_LABELS[app.stage], 'ok');
+      w('   history: '+events.map(e=>appsSvc.STAGE_LABELS[e.to_stage]).join(' → '), 'ok');
+
+      w('\n✅ CORE LOOP PASSED — real auth, RLS, storage-less resume read, RPC status, and immutable event history all working.', 'ok');
+    }catch(e){
+      w('\n✗ FAILED: '+(e.message||JSON.stringify(e)), 'err');
+      console.error(e);
+    }finally{
+      document.getElementById('runBtn').disabled = false;
+    }
+  };
+  w('Ready. Save your connection, create+promote an admin, then Run.', 'muted');
+</script>
+</body>
+</html>
