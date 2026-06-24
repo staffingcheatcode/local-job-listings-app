@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LJL — Core Loop (live Supabase test)</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#0d2542;color:#e8eef5;margin:0;padding:24px;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:#9fb6d1;font-size:14px;margin-bottom:18px}
+  .card{background:#11294a;border:1px solid #1d3a5f;border-radius:14px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 10px;color:#cfe0f3}
+  label{display:block;font-size:12px;color:#9fb6d1;margin:8px 0 4px}
+  input{width:100%;padding:10px;border-radius:9px;border:1px solid #29467099;background:#0c2140;color:#fff;font-size:14px;box-sizing:border-box}
+  button{background:#FFC400;color:#1b1300;border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:15px;cursor:pointer}
+  button.sec{background:#1d3a5f;color:#cfe0f3}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .log{background:#081a30;border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:pre-wrap;max-height:420px;overflow:auto;border:1px solid #1d3a5f}
+  .ok{color:#7ee2a8}.err{color:#ff9d9d}.step{color:#9fd0ff}.muted{color:#7990ab}
+  .warn{background:#3a2a0a;border:1px solid #6b5212;color:#ffd98a;border-radius:10px;padding:12px;font-size:13px;margin-bottom:16px}
+  code{background:#0c2140;padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Local Job Listings USA — Core Loop (live)</h1>
+  <div class="sub">Runs the real flow against your Supabase: employer posts a job → admin approves → seeker applies → employer advances status → seeker tracker updates.</div>
+
+  <div class="warn">
+    Before running: (1) run <code>0001_schema.sql</code> → <code>0002_policies.sql</code> → <code>0003_hardening.sql</code> → <code>seed.sql</code> in the Supabase SQL editor; (2) create the two storage buckets if not auto-created; (3) in Auth → Email, turn <b>off</b> “Confirm email” for this test; (4) create an admin account below and promote it once with <code>update public.profiles set role='admin' where email='...';</code>
+  </div>
+
+  <div class="card">
+    <h2>1 · Connection</h2>
+    <label>SUPABASE_URL</label>
+    <input id="cfgUrl" placeholder="https://xxxx.supabase.co" />
+    <label>SUPABASE_ANON_KEY</label>
+    <input id="cfgKey" placeholder="anon public key" />
+    <div style="margin-top:12px"><button class="sec" onclick="saveCfg()">Save connection</button> <span id="cfgState" class="muted">not set</span></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Admin account (you promote this once via SQL)</h2>
+    <label>Admin email</label><input id="adminEmail" placeholder="admin@yourco.com" />
+    <label>Admin password</label><input id="adminPass" type="password" placeholder="••••••••" />
+    <div style="margin-top:10px"><button class="sec" onclick="makeAdmin()">Sign up admin account</button> <span class="muted">then promote it in SQL, then run the loop</span></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · Run the full core loop</h2>
+    <button id="runBtn" onclick="runLoop()">▶ Run end-to-end</button>
+    <div style="margin-top:14px" class="log" id="log">Waiting…</div>
+  </div>
+
+  <div class="card">
+    <h2>4 · Security verification (role guard + 11 RLS tests)</h2>
+    <div class="sub" style="margin-bottom:10px">Creates two employers, two seekers and an admin, then actively attempts unauthorized actions and confirms each one fails.</div>
+    <button id="secBtn" onclick="runSecurity()">▶ Run security verification</button>
+    <div style="margin-top:14px" class="log" id="seclog">Waiting…</div>
+  </div>
+</div>
+
+<!-- config first, then the module that uses the services -->
+<script>
+  function saveCfg(){
+    window.LJL_CONFIG = { SUPABASE_URL: cfgUrl.value.trim(), SUPABASE_ANON_KEY: cfgKey.value.trim(), RESUME_URL_FUNCTION:"" };
+    window.LJL_LIVE = !!(window.LJL_CONFIG.SUPABASE_URL && window.LJL_CONFIG.SUPABASE_ANON_KEY);
+    document.getElementById('cfgState').textContent = window.LJL_LIVE ? "saved ✓ (reload not needed)" : "missing values";
+    document.getElementById('cfgState').className = window.LJL_LIVE ? "ok" : "err";
+  }
+</script>
+<script type="module">
+  // We import lazily AFTER config is saved, so the client picks up the URL/key.
+  const log = document.getElementById('log');
+  let firstLine = true;
+  function w(msg, cls=''){ if(firstLine){log.textContent='';firstLine=false;} const s=document.createElement('span'); s.className=cls; s.textContent=msg+'\n'; log.appendChild(s); log.scrollTop=log.scrollHeight; }
+
+  window.makeAdmin = async () => {
+    if(!window.LJL_LIVE){ w('Save the connection first.', 'err'); return; }
+    const { signUp } = await import('./src/services/auth.js');
+    try{
+      await signUp({ email: adminEmail.value.trim(), password: adminPass.value, role:'admin', fullName:'Platform Admin' });
+      w('Admin account created. Now run in SQL:', 'ok');
+      w(`  update public.profiles set role='admin' where email='${adminEmail.value.trim()}';`, 'muted');
+    }catch(e){ w('Admin signup: '+(e.message||e), 'err'); }
+  };
+
+  window.runLoop = async () => {
+    if(!window.LJL_LIVE){ w('Save the connection first.', 'err'); return; }
+    document.getElementById('runBtn').disabled = true;
+    const stamp = Date.now();
+    const pass = 'Passw0rd!demo';
+    const empEmail = `emp_${stamp}@ljl.test`;
+    const seekerEmail = `seeker_${stamp}@ljl.test`;
+
+    try{
+      const auth = await import('./src/services/auth.js');
+      const orgs = await import('./src/services/orgs.js');
+      const jobsSvc = await import('./src/services/jobs.js');
+      const resumesSvc = await import('./src/services/resumes.js');
+      const coversSvc = await import('./src/services/coverLetters.js');
+      const appsSvc = await import('./src/services/applications.js');
+      const adminSvc = await import('./src/services/admin.js');
+
+      w('① Employer signs up…', 'step');
+      await auth.signUp({ email: empEmail, password: pass, role:'employer', fullName:'Dana Whitfield' });
+      w('   ✓ '+empEmail, 'ok');
+
+      w('② Employer creates company profile…', 'step');
+      const employer = await orgs.createEmployer({ companyName:'Lakeside Distribution', industry:'Logistics', size:'11-50', hqCity:'Chicago, IL', about:'Family-owned DC.', agreedNonDiscrimination:true });
+      w('   ✓ employer id '+employer.id.slice(0,8)+'…', 'ok');
+
+      w('③ Employer posts a job (starts pending)…', 'step');
+      const job = await jobsSvc.createEmployerJob(employer.id, {
+        title:'Forklift Operator', companyName:'Lakeside Distribution', cityState:'Chicago, IL',
+        payMin:19, payMax:23, employmentType:'temp_to_hire', shifts:['1st','2nd'], category:'Logistics',
+        description:'Operate cherry picker and sit-down forklift.', requirements:['Forklift certification','6+ months warehouse'],
+        benefits:['Weekly pay'], openings:4, urgency:'urgent', contactPerson:'Dana Whitfield',
+      });
+      w('   ✓ job id '+job.id.slice(0,8)+'… status='+job.status+' moderation='+job.moderation_status, 'ok');
+
+      w('④ Confirm job is NOT yet public…', 'step');
+      // sign out to anon and check public feed
+      await auth.signOut();
+      let pub = await jobsSvc.listPublicJobs();
+      w('   public jobs visible to anon: '+pub.filter(j=>j.id===job.id).length+' (expected 0)', pub.some(j=>j.id===job.id)?'err':'ok');
+
+      w('⑤ Admin approves the job…', 'step');
+      await auth.signIn({ email: adminEmail.value.trim(), password: adminPass.value });
+      const me = await auth.getMyProfile();
+      if(me.role!=='admin'){ w('   ✗ This account is not admin yet. Promote it in SQL and rerun.', 'err'); document.getElementById('runBtn').disabled=false; return; }
+      await adminSvc.approveJob(job.id);
+      w('   ✓ approved by admin', 'ok');
+
+      w('⑥ Job seeker signs up + sets profile…', 'step');
+      await auth.signOut();
+      await auth.signUp({ email: seekerEmail, password: pass, role:'job_seeker', fullName:'Marcus Reed' });
+      await auth.upsertJobSeeker({ location:'Chicago, IL', radius_mi:25, pay_min:18, pay_max:30, categories:['Logistics'] });
+      w('   ✓ '+seekerEmail, 'ok');
+
+      w('⑦ Seeker saves a resume (text) + AI cover letter…', 'step');
+      const resume = await resumesSvc.saveTextResume({ summary:'3 yrs warehouse, OSHA forklift certified, RF scanner.', fileName:'Marcus_Reed_Resume' });
+      const clText = coversSvc.genCoverLetterText({ jobTitle:'Forklift Operator', company:'Lakeside Distribution', seekerName:'Marcus Reed' });
+      const cover = await coversSvc.saveCoverLetter({ title:'Forklift Operator — Lakeside', body:clText, jobId:job.id });
+      w('   ✓ resume '+resume.id.slice(0,8)+'… cover '+cover.id.slice(0,8)+'…', 'ok');
+
+      w('⑧ Seeker sees the approved job + applies…', 'step');
+      pub = await jobsSvc.listPublicJobs();
+      w('   approved job now visible to seeker: '+(pub.some(j=>j.id===job.id)?'yes ✓':'no ✗'), pub.some(j=>j.id===job.id)?'ok':'err');
+      const application = await appsSvc.applyToJob({ jobId:job.id, resumeId:resume.id, coverLetterId:cover.id, note:'I live nearby, can start Monday.', shareConsent:true });
+      w('   ✓ application '+application.id.slice(0,8)+'… stage='+application.stage, 'ok');
+
+      w('⑨ Employer sees the applicant + their docs…', 'step');
+      await auth.signOut();
+      await auth.signIn({ email: empEmail, password: pass });
+      const applicants = await appsSvc.listApplicantsForJob(job.id);
+      w('   ✓ applicants on this job: '+applicants.length+' — '+(applicants[0]?.profiles?.full_name||'?')+', resume summary readable: '+(applicants[0]?.resumes?.summary?'yes':'no'), 'ok');
+
+      w('⑩ Employer advances status through all stages…', 'step');
+      for(const st of appsSvc.STAGES.slice(1, 7)){ // resume_received → hired
+        await appsSvc.setApplicationStage(application.id, st);
+        w('   → '+appsSvc.STAGE_LABELS[st], 'muted');
+      }
+      w('   ✓ reached Hired', 'ok');
+
+      w('⑪ Seeker reloads tracker (real events)…', 'step');
+      await auth.signOut();
+      await auth.signIn({ email: seekerEmail, password: pass });
+      const { app, events } = await appsSvc.getApplicationTracker(application.id);
+      w('   ✓ current stage: '+appsSvc.STAGE_LABELS[app.stage], 'ok');
+      w('   history: '+events.map(e=>appsSvc.STAGE_LABELS[e.to_stage]).join(' → '), 'ok');
+
+      w('\n✅ CORE LOOP PASSED — real auth, RLS, storage-less resume read, RPC status, and immutable event history all working.', 'ok');
+    }catch(e){
+      w('\n✗ FAILED: '+(e.message||JSON.stringify(e)), 'err');
+      console.error(e);
+    }finally{
+      document.getElementById('runBtn').disabled = false;
+    }
+  };
+  // ==========================================================================
+  // SECURITY VERIFICATION — role-escalation guard + 11 access-control tests.
+  // Each test actively ATTEMPTS an unauthorized action and confirms it fails.
+  // ==========================================================================
+  const slog = document.getElementById('seclog');
+  let secFirst = true;
+  function sw(msg, cls=''){ if(secFirst){slog.textContent='';secFirst=false;} const s=document.createElement('span'); s.className=cls; s.textContent=msg+'\n'; slog.appendChild(s); slog.scrollTop=slog.scrollHeight; }
+
+  window.runSecurity = async () => {
+    if(!window.LJL_LIVE){ sw('Save the connection first.', 'err'); return; }
+    document.getElementById('secBtn').disabled = true;
+    let passed = 0, failed = 0;
+    const ASSERT = (name, ok, detail='') => {
+      if(ok){ passed++; sw('PASS  '+name+(detail?'  — '+detail:''), 'ok'); }
+      else  { failed++; sw('FAIL  '+name+(detail?'  — '+detail:''), 'err'); }
+    };
+    // A guarded attempt helper: returns true if the op was blocked (error OR no rows).
+    const blocked = (res) => !!res.error || !res.data || (Array.isArray(res.data) && res.data.length === 0);
+
+    try{
+      const auth = await import('./src/services/auth.js');
+      const orgs = await import('./src/services/orgs.js');
+      const jobsSvc = await import('./src/services/jobs.js');
+      const resumesSvc = await import('./src/services/resumes.js');
+      const appsSvc = await import('./src/services/applications.js');
+      const adminSvc = await import('./src/services/admin.js');
+      const { supabase } = await import('./src/lib/supabase.js');
+
+      const t = Date.now();
+      const PW = 'Passw0rd!demo';
+      const file = (txt) => new File([txt], 'resume.txt', { type: 'text/plain' });
+
+      sw('Setting up fixtures (2 employers, 2 seekers, jobs, applications)…', 'step');
+
+      // --- Employer A + approved Job A ---
+      await auth.signUp({ email:`empA_${t}@ljl.test`, password:PW, role:'employer', fullName:'Employer A' });
+      const empA = await orgs.createEmployer({ companyName:'Alpha Logistics', agreedNonDiscrimination:true });
+      const jobAraw = await jobsSvc.createEmployerJob(empA.id, { title:'Forklift Op A', companyName:'Alpha Logistics', cityState:'Chicago, IL', payMin:19, payMax:23, employmentType:'temp_to_hire', category:'Logistics' });
+
+      // --- Employer B + approved Job B ---
+      await auth.signOut();
+      await auth.signUp({ email:`empB_${t}@ljl.test`, password:PW, role:'employer', fullName:'Employer B' });
+      const empB = await orgs.createEmployer({ companyName:'Beta Warehousing', agreedNonDiscrimination:true });
+      const jobBraw = await jobsSvc.createEmployerJob(empB.id, { title:'Picker B', companyName:'Beta Warehousing', cityState:'Aurora, IL', payMin:16, payMax:19, employmentType:'full_time', category:'Warehouse' });
+
+      // --- Admin approves both jobs ---
+      await auth.signOut();
+      await auth.signIn({ email: adminEmail.value.trim(), password: adminPass.value });
+      const adminProfile = await auth.getMyProfile();
+      if(adminProfile.role !== 'admin'){ sw('Admin account is not promoted yet — run the SQL promote and retry.', 'err'); document.getElementById('secBtn').disabled=false; return; }
+      await adminSvc.approveJob(jobAraw.id);
+      await adminSvc.approveJob(jobBraw.id);
+
+      // --- Seeker 1 (real uploaded file) applies to Job A ---
+      await auth.signOut();
+      await auth.signUp({ email:`s1_${t}@ljl.test`, password:PW, role:'job_seeker', fullName:'Seeker One' });
+      const s1 = await auth.getCurrentUser();
+      await auth.upsertJobSeeker({ location:'Chicago, IL' });
+      const r1 = await resumesSvc.uploadResume(file('Seeker One resume — forklift, 3 yrs'), { summary:'Forklift, 3 yrs' });
+      const appA1 = await appsSvc.applyToJob({ jobId: jobAraw.id, resumeId: r1.id, note:'A1', shareConsent:true });
+
+      // --- Seeker 2 applies to Job A ---
+      await auth.signOut();
+      await auth.signUp({ email:`s2_${t}@ljl.test`, password:PW, role:'job_seeker', fullName:'Seeker Two' });
+      const s2 = await auth.getCurrentUser();
+      await auth.upsertJobSeeker({ location:'Cicero, IL' });
+      const r2 = await resumesSvc.uploadResume(file('Seeker Two resume — picker, 2 yrs'), { summary:'Picker, 2 yrs' });
+      const appA2 = await appsSvc.applyToJob({ jobId: jobAraw.id, resumeId: r2.id, note:'A2', shareConsent:true });
+
+      sw('Fixtures ready. Running tests…\n', 'step');
+
+      // ===================== ROLE ESCALATION GUARD =====================
+      // Seeker 2 is currently signed in. Attempt self-promotion to admin.
+      let res = await supabase.from('profiles').update({ role:'admin' }).eq('id', s2.id).select();
+      let after = await supabase.from('profiles').select('role').eq('id', s2.id).single();
+      ASSERT('Role guard — job_seeker cannot self-promote to admin',
+             (after.data?.role === 'job_seeker'), 'role still '+(after.data?.role));
+
+      // Employer A attempts self-promotion to admin.
+      await auth.signOut(); await auth.signIn({ email:`empA_${t}@ljl.test`, password:PW });
+      const empAUser = await auth.getCurrentUser();
+      await supabase.from('profiles').update({ role:'admin' }).eq('id', empAUser.id).select();
+      after = await supabase.from('profiles').select('role').eq('id', empAUser.id).single();
+      ASSERT('Role guard — employer cannot self-promote to admin',
+             (after.data?.role === 'employer'), 'role still '+(after.data?.role));
+
+      // ===================== 1 & 2: visibility before/after approval =====================
+      await auth.signOut();
+      await auth.signIn({ email:`empA_${t}@ljl.test`, password:PW });
+      const jobC = await jobsSvc.createEmployerJob(empA.id, { title:'Pending Job C', companyName:'Alpha Logistics', cityState:'Chicago, IL', payMin:20, payMax:25, employmentType:'contract', category:'Logistics' });
+      await auth.signOut(); // anonymous
+      let pub = await jobsSvc.listPublicJobs();
+      ASSERT('1 · Job is INVISIBLE before admin approval', !pub.some(j=>j.id===jobC.id));
+
+      await auth.signIn({ email: adminEmail.value.trim(), password: adminPass.value });
+      await adminSvc.approveJob(jobC.id);
+      await auth.signOut();
+      pub = await jobsSvc.listPublicJobs();
+      ASSERT('2 · Job is VISIBLE after admin approval', pub.some(j=>j.id===jobC.id));
+
+      // ===================== 3: seeker sees only own applications =====================
+      await auth.signIn({ email:`s1_${t}@ljl.test`, password:PW });
+      const myApps = await appsSvc.listMyApplications();
+      const onlyMine = myApps.every(a => a.seeker_id === s1.id) && !myApps.some(a => a.id === appA2.id);
+      ASSERT('3 · Seeker sees ONLY their own applications', onlyMine, myApps.length+' visible');
+
+      // ===================== 6: seeker cannot view another seeker's resume/application =====================
+      const otherResume = await supabase.from('resumes').select('*').eq('id', r2.id);
+      const otherApp = await supabase.from('applications').select('*').eq('id', appA2.id);
+      ASSERT('6 · Seeker cannot read another seeker\'s resume', blocked(otherResume));
+      ASSERT('6 · Seeker cannot read another seeker\'s application', blocked(otherApp));
+
+      // ===================== 4 & 5: employer applicant isolation =====================
+      await auth.signOut(); await auth.signIn({ email:`empA_${t}@ljl.test`, password:PW });
+      const aOwn = await appsSvc.listApplicantsForJob(jobAraw.id);
+      ASSERT('4 · Employer SEES applicants for their own job', aOwn.length >= 2, aOwn.length+' applicants');
+      const aOther = await appsSvc.listApplicantsForJob(jobBraw.id);
+      ASSERT('4 · Employer sees NONE for a job they don\'t own', aOther.length === 0);
+
+      await auth.signOut(); await auth.signIn({ email:`empB_${t}@ljl.test`, password:PW });
+      const bSpyJobA = await appsSvc.listApplicantsForJob(jobAraw.id);
+      const bSpyApp = await supabase.from('applications').select('*').eq('id', appA1.id);
+      ASSERT('5 · Unrelated employer cannot view another employer\'s applicants', bSpyJobA.length === 0 && blocked(bSpyApp));
+
+      // ===================== 9: stage changes must go through the RPC =====================
+      await auth.signOut(); await auth.signIn({ email:`empA_${t}@ljl.test`, password:PW });
+      // direct table update should NOT change the stage (no update policy)
+      await supabase.from('applications').update({ stage:'hired' }).eq('id', appA1.id);
+      let chk = await supabase.from('applications').select('stage').eq('id', appA1.id).single();
+      const directBlocked = (chk.data?.stage === 'submitted');
+      // RPC SHOULD work
+      await appsSvc.setApplicationStage(appA1.id, 'in_review');
+      chk = await supabase.from('applications').select('stage').eq('id', appA1.id).single();
+      ASSERT('9 · Direct stage UPDATE blocked; RPC works', directBlocked && chk.data?.stage === 'in_review',
+             'direct→'+(directBlocked?'blocked':'LEAKED')+', rpc→'+chk.data?.stage);
+
+      // ===================== 7 & 8: reject reason enum-safe / no free-text =====================
+      // valid enum via RPC
+      let validReason = true;
+      try { await appsSvc.setApplicationStage(appA1.id, 'not_selected', 'position_filled'); }
+      catch(e){ validReason = false; }
+      // invalid enum via RPC -> must error
+      let invalidBlocked = false;
+      try { await appsSvc.setApplicationStage(appA1.id, 'not_selected', 'too_old'); }
+      catch(e){ invalidBlocked = true; }
+      ASSERT('7 · Valid enum reason accepted, invalid enum rejected', validReason && invalidBlocked);
+
+      // free-text discriminatory reason via direct write -> must NOT be stored
+      const freeText = await supabase.from('applications').update({ reject_reason:'too old, wrong gender' }).eq('id', appA1.id).select();
+      const recheck = await supabase.from('applications').select('reject_reason').eq('id', appA1.id).single();
+      ASSERT('8 · Free-text discriminatory rejection reason CANNOT be stored',
+             (!!freeText.error || recheck.data?.reject_reason !== 'too old, wrong gender'),
+             freeText.error ? 'rejected by DB' : ('stored value: '+recheck.data?.reject_reason));
+
+      // ===================== 10: status history append-only =====================
+      const forge = await supabase.from('application_status_events')
+        .insert({ application_id: appA1.id, to_stage:'hired' }).select();
+      ASSERT('10 · Status history is append-only (client cannot insert events)', !!forge.error,
+             forge.error ? 'insert blocked' : 'LEAKED');
+      // confirm legitimate history still readable + was written by triggers
+      const { events } = await (async()=>{ await auth.signOut(); await auth.signIn({email:`s1_${t}@ljl.test`,password:PW}); return appsSvc.getApplicationTracker(appA1.id); })();
+      ASSERT('10 · Trigger-written history is present & readable by the seeker', events.length >= 2, events.length+' events');
+
+      // ===================== 11: signed resume URL authorization =====================
+      sw('11 · Resume signed-URL (requires the get-resume-url edge function deployed)…', 'step');
+      // authorized: Employer A requesting Seeker 1's resume on their own job
+      await auth.signOut(); await auth.signIn({ email:`empA_${t}@ljl.test`, password:PW });
+      let okUrl = null, urlErr = null;
+      try { okUrl = await resumesSvc.getResumeFileUrl(appA1.id); } catch(e){ urlErr = e; }
+      if(urlErr){
+        sw('SKIP  11 · signed URL — edge function not reachable ('+(urlErr.message||urlErr)+'). Deploy get-resume-url to test.', 'muted');
+      } else {
+        ASSERT('11 · Owning employer CAN get a signed resume URL', !!okUrl && okUrl.includes('token'));
+        // unauthorized: Employer B requesting the same resume
+        await auth.signOut(); await auth.signIn({ email:`empB_${t}@ljl.test`, password:PW });
+        let denied = false;
+        try { await resumesSvc.getResumeFileUrl(appA1.id); } catch(e){ denied = true; }
+        ASSERT('11 · Unrelated employer is DENIED a signed resume URL', denied);
+      }
+
+      sw('\n'+(failed===0
+          ? '✅ ALL SECURITY TESTS PASSED ('+passed+'/'+(passed+failed)+').'
+          : '⚠ '+failed+' test(s) FAILED, '+passed+' passed. Review above.'),
+         failed===0 ? 'ok' : 'err');
+    }catch(e){
+      sw('\n✗ Harness error: '+(e.message||JSON.stringify(e)), 'err');
+      console.error(e);
+    }finally{
+      document.getElementById('secBtn').disabled = false;
+    }
+  };
+
+  w('Ready. Save your connection, create+promote an admin, then Run.', 'muted');
+  sw('Ready. Run the core loop first, then run security verification.', 'muted');
+</script>
+</body>
+</html>

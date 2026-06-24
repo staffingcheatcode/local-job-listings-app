@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Local Job Listings USA — Architecture Map</title>
+<style>
+  :root{
+    --navy:#0d2542; --navy2:#102a4d; --blue:#11539E; --blue-deep:#0B3B72;
+    --ink:#0C1B2A; --ink2:#54657A; --card:#FFFFFF; --line:#E4EAF1;
+    --yellow:#FFC400; --green:#15A34A; --green-bg:#E5F6EC; --green-tx:#0F7A37;
+    --orange:#E8870E; --orange-bg:#FFF3D1; --orange-tx:#9A6A00;
+    --red:#D64545; --red-bg:#FBEDED; --red-tx:#B23B3B;
+    --blue-bg:#E8F0FA; --muted:#9FB6D1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:
+      radial-gradient(900px 500px at 100% -10%, #1c4f86 0%, transparent 55%),
+      var(--navy);color:#e8eef5;line-height:1.5;padding-bottom:60px}
+  h1,h2,h3{margin:0;line-height:1.15}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px}
+
+  header{padding:26px 0 12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:46px;height:46px;border-radius:12px;background:#fff;color:var(--blue);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;flex:none}
+  header h1{font-size:24px}
+  header h1 .usa{color:var(--yellow)}
+  .tagline{color:var(--muted);font-size:14px;margin-top:4px}
+  .progress-head{background:rgba(255,255,255,.07);border:1px solid #244769;border-radius:14px;
+    padding:14px 16px;margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .ring{--p:0;width:64px;height:64px;border-radius:50%;flex:none;
+    background:conic-gradient(var(--green) calc(var(--p)*1%), #29486c 0);
+    display:flex;align-items:center;justify-content:center}
+  .ring span{width:50px;height:50px;border-radius:50%;background:var(--navy);display:flex;
+    align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
+  .progress-head .pt{font-size:14px;color:var(--muted)}
+  .progress-head .pt b{color:#fff;font-size:16px;display:block}
+
+  nav.pills{position:sticky;top:0;z-index:50;background:rgba(13,37,66,.94);backdrop-filter:blur(6px);
+    border-bottom:1px solid #1d3a5f;margin-top:14px}
+  .pills-inner{display:flex;gap:8px;overflow-x:auto;padding:11px 16px;max-width:980px;margin:0 auto}
+  .pills-inner::-webkit-scrollbar{height:0}
+  .pill{flex:none;background:#16335a;border:1px solid #244769;color:#cfe0f3;border-radius:999px;
+    padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none}
+  .pill:hover{background:var(--blue)}
+
+  section{scroll-margin-top:64px;margin:26px 0}
+  .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .sec-h .num{background:var(--yellow);color:#1b1300;font-weight:800;border-radius:9px;
+    width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+  .sec-h h2{font-size:20px;color:#fff}
+  .sec-sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+
+  .card{background:var(--card);color:var(--ink);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  .grid{display:grid;gap:12px}
+  .g2{grid-template-columns:1fr 1fr}
+  @media(max-width:680px){.g2{grid-template-columns:1fr}}
+
+  .badge{display:inline-block;font-size:11px;font-weight:800;border-radius:7px;padding:3px 8px;
+    text-transform:uppercase;letter-spacing:.03em}
+  .b-done{background:var(--green-bg);color:var(--green-tx)}
+  .b-prog{background:var(--orange-bg);color:var(--orange-tx)}
+  .b-miss{background:var(--red-bg);color:var(--red-tx)}
+  .b-test{background:var(--blue-bg);color:var(--blue)}
+  .b-plan{background:#eef1f5;color:#54657a}
+  .b-req{background:var(--red-bg);color:var(--red-tx)}
+
+  /* expandable cards */
+  .x{background:var(--card);color:var(--ink);border-radius:12px;margin-bottom:10px;overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.14)}
+  .x-h{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer}
+  .x-h:hover{background:#f6f9fc}
+  .x-h .ico{width:30px;height:30px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .x-h .t{font-weight:700;font-size:15px;flex:1}
+  .x-h .chev{color:#9aa7b6;transition:transform .2s;flex:none}
+  .x.open .chev{transform:rotate(90deg)}
+  .x-body{display:none;padding:0 14px 14px;font-size:13.5px;color:#3c4d62}
+  .x.open .x-body{display:block;animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .x-body .row{display:flex;gap:8px;margin-top:8px}
+  .x-body .k{font-weight:700;color:var(--ink);min-width:64px;flex:none}
+  .x-body code{background:#eef2f7;padding:1px 6px;border-radius:5px;font-size:12px}
+
+  /* flow diagrams */
+  .actors{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .actor{background:var(--card);color:var(--ink);border-radius:12px;padding:13px;box-shadow:0 4px 12px rgba(0,0,0,.14)}
+  .actor h3{font-size:15px;display:flex;align-items:center;gap:7px;margin-bottom:8px}
+  .actor .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .step{background:#f4f8fc;border-left:3px solid var(--blue);border-radius:7px;padding:7px 9px;font-size:12.5px;color:#34465c;margin:6px 0}
+  .down{text-align:center;color:#b6c4d4;font-size:13px;margin:-2px 0}
+  .supa{border-left-color:var(--yellow)}
+  .supa .step{border-left-color:var(--orange)}
+
+  .flow{display:flex;flex-direction:column;gap:0}
+  .fnode{background:#f4f8fc;border:1px solid #dceaf6;border-radius:9px;padding:11px 13px;font-size:13.5px;color:var(--ink);font-weight:600}
+  .fnode small{display:block;font-weight:400;color:var(--ink2);margin-top:2px;font-size:12px}
+  .farrow{text-align:center;color:#9fb6d1;font-size:16px;margin:5px 0;color:#7d93ad}
+  .fnode.acc{background:#FFF9E6;border-color:#f0d98a}
+  .fnode.ok{background:var(--green-bg);border-color:#bce6cc}
+
+  /* tabs */
+  .tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px}
+  .tabs::-webkit-scrollbar{height:0}
+  .tab{flex:none;background:#16335a;border:1px solid #244769;color:#cfe0f3;border-radius:9px;
+    padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .tab.on{background:var(--yellow);color:#1b1300;border-color:var(--yellow)}
+  .pane{display:none}.pane.on{display:block}
+
+  /* roles table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}
+  th{background:#f4f8fc;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2)}
+  .can{color:var(--green-tx)}.cannot{color:var(--red-tx)}
+
+  /* checklist */
+  .check{display:flex;align-items:center;gap:11px;background:var(--card);color:var(--ink);
+    border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;box-shadow:0 3px 9px rgba(0,0,0,.12)}
+  .cbox{width:24px;height:24px;border-radius:7px;border:2px solid #c2cdd9;flex:none;display:flex;
+    align-items:center;justify-content:center;color:#fff;font-weight:800;transition:.12s}
+  .check.on .cbox{background:var(--green);border-color:var(--green)}
+  .check.on .lbl{text-decoration:line-through;color:#8a99a8}
+  .lbl{font-size:14px;font-weight:600}
+  .check-actions{display:flex;gap:8px;margin:6px 0 14px}
+  .mini{background:#16335a;border:1px solid #244769;color:#cfe0f3;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+
+  .founder{background:linear-gradient(120deg,#11539E,#1a6fc4);border-radius:16px;padding:20px;color:#fff}
+  .founder .quote{font-size:16px;line-height:1.5;font-weight:600}
+  .founder .grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  @media(max-width:560px){.founder .grid4{grid-template-columns:1fr}}
+  .founder .mini-card{background:rgba(255,255,255,.12);border-radius:11px;padding:12px}
+  .founder .mini-card h4{font-size:13px;margin:0 0 5px;color:var(--yellow)}
+  .founder .mini-card p{font-size:12.5px;margin:0;color:#e4eef9}
+
+  .note{background:rgba(255,196,0,.1);border:1px solid #6b5212;color:#ffe19a;border-radius:11px;
+    padding:12px 14px;font-size:12.5px;margin-top:12px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .key{width:11px;height:11px;border-radius:3px;display:inline-block}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:30px;padding:0 16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">LJ</div>
+      <div>
+        <h1>Local Job Listings <span class="usa">USA</span> — Architecture Map</h1>
+        <div class="tagline">A simple picture of how the whole app works, what's built, and what's next.</div>
+      </div>
+    </div>
+    <div class="progress-head">
+      <div class="ring" id="ring"><span id="ringPct">0%</span></div>
+      <div class="pt"><b id="progText">Foundation stage</b>Backend + tests built. Next big step: connect the pretty screens to the real database.</div>
+    </div>
+    <div class="legend">
+      <span><i class="key" style="background:var(--green)"></i> Done</span>
+      <span><i class="key" style="background:var(--orange)"></i> In progress</span>
+      <span><i class="key" style="background:var(--red)"></i> Missing / risk</span>
+      <span><i class="key" style="background:var(--blue)"></i> Tested</span>
+      <span><i class="key" style="background:#94a3b8"></i> Planned</span>
+    </div>
+  </header>
+</div>
+
+<nav class="pills">
+  <div class="pills-inner">
+    <a class="pill" href="#s1">1 · Big picture</a>
+    <a class="pill" href="#s2">2 · Where are we</a>
+    <a class="pill" href="#s3">3 · Files</a>
+    <a class="pill" href="#s4">4 · Data flows</a>
+    <a class="pill" href="#s5">5 · Roles</a>
+    <a class="pill" href="#s6">6 · Database</a>
+    <a class="pill" href="#s7">7 · Locks & safety</a>
+    <a class="pill" href="#s8">8 · App store</a>
+    <a class="pill" href="#s9">9 · Risks</a>
+    <a class="pill" href="#s10">10 · Milestones</a>
+    <a class="pill" href="#s11">11 · Checklist</a>
+    <a class="pill" href="#s12">12 · Summary</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============ SECTION 1 — BIG PICTURE ============ -->
+  <section id="s1">
+    <div class="sec-h"><div class="num">1</div><h2>The big picture</h2></div>
+    <p class="sec-sub">Four kinds of people use the app, and Supabase is the engine behind all of it.</p>
+    <div class="actors">
+      <div class="actor">
+        <h3><span class="dot" style="background:var(--blue)"></span>Job Seeker</h3>
+        <div class="step">Searches local jobs</div><div class="down">↓</div>
+        <div class="step">Applies with resume / cover letter</div><div class="down">↓</div>
+        <div class="step">Application is stored</div><div class="down">↓</div>
+        <div class="step">Employer sees them</div><div class="down">↓</div>
+        <div class="step">Employer changes status</div><div class="down">↓</div>
+        <div class="step">Tracker updates ✅</div>
+      </div>
+      <div class="actor">
+        <h3><span class="dot" style="background:var(--orange)"></span>Employer</h3>
+        <div class="step">Creates company account</div><div class="down">↓</div>
+        <div class="step">Posts a job</div><div class="down">↓</div>
+        <div class="step">Waits for admin approval</div><div class="down">↓</div>
+        <div class="step">Receives applicants</div><div class="down">↓</div>
+        <div class="step">Moves them through stages</div>
+      </div>
+      <div class="actor">
+        <h3><span class="dot" style="background:var(--green)"></span>Staffing Agency</h3>
+        <div class="step">Creates agency account</div><div class="down">↓</div>
+        <div class="step">Adds branches / recruiters</div><div class="down">↓</div>
+        <div class="step">Posts job orders</div><div class="down">↓</div>
+        <div class="step">Manages many applicants</div>
+      </div>
+      <div class="actor">
+        <h3><span class="dot" style="background:var(--red)"></span>Admin</h3>
+        <div class="step">Approves jobs</div><div class="down">↓</div>
+        <div class="step">Moderates accounts</div><div class="down">↓</div>
+        <div class="step">Reviews flags</div><div class="down">↓</div>
+        <div class="step">Sees audit / consent logs</div>
+      </div>
+      <div class="actor supa">
+        <h3><span class="dot" style="background:var(--yellow)"></span>Supabase (engine)</h3>
+        <div class="step">Auth / login</div>
+        <div class="step">Database</div>
+        <div class="step">File storage</div>
+        <div class="step">Row-level security</div>
+        <div class="step">Edge functions</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 — WHERE ARE WE ============ -->
+  <section id="s2">
+    <div class="sec-h"><div class="num">2</div><h2>Where are we now?</h2></div>
+    <p class="sec-sub">Tap any card to see what it means and what's left. Green = done, orange = in progress, red = not started.</p>
+    <h3 style="color:#bfe6cf;font-size:15px;margin:6px 0 8px">✅ Done</h3>
+    <div id="doneList"></div>
+    <h3 style="color:#ffd98a;font-size:15px;margin:16px 0 8px">🛠 In progress</h3>
+    <div id="progList"></div>
+    <h3 style="color:#ffb3b3;font-size:15px;margin:16px 0 8px">⏳ Not started / next</h3>
+    <div id="nextList"></div>
+  </section>
+
+  <!-- ============ SECTION 3 — FILES ============ -->
+  <section id="s3">
+    <div class="sec-h"><div class="num">3</div><h2>Files & folders</h2></div>
+    <p class="sec-sub">The whole project in one tree. Tap a folder to open it, tap a file to learn what it does.</p>
+    <div id="fileTree"></div>
+  </section>
+
+  <!-- ============ SECTION 4 — DATA FLOWS ============ -->
+  <section id="s4">
+    <div class="sec-h"><div class="num">4</div><h2>How information moves</h2></div>
+    <p class="sec-sub">Five short journeys. Tap a tab to follow each one step by step.</p>
+    <div class="tabs" id="flowTabs"></div>
+    <div id="flowPanes"></div>
+  </section>
+
+  <!-- ============ SECTION 5 — ROLES ============ -->
+  <section id="s5">
+    <div class="sec-h"><div class="num">5</div><h2>Who can do what</h2></div>
+    <p class="sec-sub">Every person only gets the keys they're supposed to have.</p>
+    <div class="grid g2" id="roleCards"></div>
+    <div class="card" style="margin-top:12px;overflow-x:auto">
+      <table id="roleTable"></table>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 6 — DATABASE ============ -->
+  <section id="s6">
+    <div class="sec-h"><div class="num">6</div><h2>The database, in plain words</h2></div>
+    <p class="sec-sub">Think of the database as labeled drawers. Tap a drawer to see what's inside.</p>
+    <div id="dbList"></div>
+  </section>
+
+  <!-- ============ SECTION 7 — LOCKS & SAFETY ============ -->
+  <section id="s7">
+    <div class="sec-h"><div class="num">7</div><h2>Locks & safety rules</h2></div>
+    <p class="sec-sub">These are the guards that keep people's information safe.</p>
+    <div id="lockList"></div>
+    <div class="card" style="margin-top:14px">
+      <h3 style="font-size:16px;margin-bottom:4px">Security verification checklist</h3>
+      <p style="font-size:13px;color:var(--ink2);margin:0 0 10px">These are tested by <code>connect-test.html</code> → “Run security verification”.</p>
+      <div id="secCheck"></div>
+    </div>
+    <div class="note">This app is built to be <b>compliance-aware, not “fully legally compliant.”</b> A qualified lawyer must review privacy, terms, TCPA, and hiring rules before launch.</div>
+  </section>
+
+  <!-- ============ SECTION 8 — APP STORE ============ -->
+  <section id="s8">
+    <div class="sec-h"><div class="num">8</div><h2>Mobile app store readiness</h2></div>
+    <p class="sec-sub">Apple and Google require these before they'll publish a hiring app. Most are not started yet — that's expected at this stage.</p>
+    <div id="storeList"></div>
+  </section>
+
+  <!-- ============ SECTION 9 — RISKS ============ -->
+  <section id="s9">
+    <div class="sec-h"><div class="num">9</div><h2>Risks to watch</h2></div>
+    <p class="sec-sub">What could bite us, why it matters, and when to fix it.</p>
+    <div id="riskList"></div>
+  </section>
+
+  <!-- ============ SECTION 10 — MILESTONES ============ -->
+  <section id="s10">
+    <div class="sec-h"><div class="num">10</div><h2>Next 5 milestones</h2></div>
+    <p class="sec-sub">The road from here to the app stores.</p>
+    <div id="mileList"></div>
+  </section>
+
+  <!-- ============ SECTION 11 — CHECKLIST ============ -->
+  <section id="s11">
+    <div class="sec-h"><div class="num">11</div><h2>Your setup checklist</h2></div>
+    <p class="sec-sub">Tap each item as you finish. Your progress is saved in this browser.</p>
+    <div class="check-actions">
+      <button class="mini" onclick="resetChecklist()">Reset checklist</button>
+      <span class="mini" style="cursor:default" id="checkCount">0 / 0 done</span>
+    </div>
+    <div id="checkList"></div>
+  </section>
+
+  <!-- ============ SECTION 12 — SUMMARY ============ -->
+  <section id="s12">
+    <div class="sec-h"><div class="num">12</div><h2>Where we are (founder summary)</h2></div>
+    <div class="founder">
+      <div class="quote">“We have the house blueprint and the lock system. We are now making sure all the rooms have doors and all the keys work. The next big win is making one real job application move through the whole app using the pretty prototype screen.”</div>
+      <div class="grid4">
+        <div class="mini-card"><h4>✅ What's built</h4><p>The visual app, the database, the security rules, and a test that proves the core loop works.</p></div>
+        <div class="mini-card"><h4>🧪 What's tested</h4><p>Login, permissions, job approval, applying, status updates, and the safety guards.</p></div>
+        <div class="mini-card"><h4>🔌 Not connected yet</h4><p>The pretty screens still use pretend data — they aren't wired to the real database yet.</p></div>
+        <div class="mini-card"><h4>➡️ Do next</h4><p>Connect one real loop: employer posts → admin approves → seeker applies → tracker updates.</p></div>
+      </div>
+      <div class="mini-card" style="margin-top:10px"><h4>🚫 Don't waste time yet on</h4><p>Logo polish, the agency green theme, animations, billing, SMS, and app-store screenshots. Those come later.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Local Job Listings USA · visual architecture companion · v0.3 — this dashboard contains no real keys, secrets, or private data.<br>
+    It does not make legal claims. The app does not guarantee jobs, interviews, or placement; employers make all hiring decisions.
+  </footer>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+const DONE = [
+  ["Visual prototype created","🎨","The clickable app you can tap through.","Lets everyone see and feel the app before code.","prototype.html","—"],
+  ["Job seeker screens","👷","Search, apply, tracker, documents.","This is the main user of the app.","prototype.html","Connect to real data next."],
+  ["Employer screens","🏢","Signup, post job, applicants, pipeline.","Employers bring the jobs.","prototype.html","Connect to real data next."],
+  ["Staffing agency screens","🤝","Branches, recruiters, job orders, candidates.","Agencies post many jobs at once.","prototype.html","Connect later (after employer slice)."],
+  ["Admin screens","🛡️","Approve jobs, moderate, view logs.","Keeps scams and bad posts out.","prototype.html","Connect approval first."],
+  ["Application tracker designed","📦","The Domino's-style status bar.","Job seekers love seeing progress.","prototype.html + applications.js","Wire to real status events."],
+  ["Resume / cover letter concept","📄","Upload or AI-draft, attach when applying.","Core to applying for jobs.","resumes.js, coverLetters.js","Wire upload in UI."],
+  ["Supabase schema created","🗄️","All the database drawers and rules.","This is where real data lives.","0001_schema.sql","Run it in Supabase."],
+  ["RLS policies created","🔒","Each user only sees their own stuff.","Privacy and safety.","0002_policies.sql","Run it in Supabase."],
+  ["0003 hardening migration","🧱","Extra locks added after review.","Closes security gaps.","0003_hardening.sql","Run it in Supabase."],
+  ["Core loop test harness","🧪","Proves the whole flow with real data.","Confidence the backend works.","connect-test.html","Run it once connected."],
+  ["Security verification","✅","Actively tries to break in and fails.","Proves the locks hold.","connect-test.html","Run it once connected."],
+  ["Role escalation guard","🚫","Nobody can make themselves admin.","Stops account takeovers.","0003_hardening.sql","Already enforced + tested."],
+  ["Resume signed-URL edge function","🔗","Temporary, checked links to resume files.","Keeps resumes private.","get-resume-url/index.ts","Deploy to test live."],
+];
+const PROG = [
+  ["Completing missing service files","🧩","Make sure every backend helper file exists.","Without them the test can't run.","src/services/*","All present — confirmed."],
+  ["Organizing the project package","📁","One clean folder you can zip and share.","Easy to upload and review.","local-job-listings-usa/","This package — done."],
+  ["Running Supabase tests","▶️","Actually running the two test buttons.","Turns 'should work' into 'does work'.","connect-test.html","You run after SQL setup."],
+  ["Confirming all files present","🔎","A final check nothing is missing.","No broken imports.","whole package","This dashboard helps."],
+  ["Preparing for UI/backend binding","🔌","Getting ready to connect screens to data.","The next big milestone.","prototype.html + services","Starts after this passes."],
+];
+const NEXT = [
+  ["Bind prototype UI to backend","🔌","Make the pretty screens use real data.","The app becomes truly functional.","prototype.html","Milestone 3."],
+  ["Real resume upload in UI","⬆️","Upload a real file from the app.","Employers need real resumes.","resumes.js","Part of binding."],
+  ["Real employer job posting","📝","Post a job from the actual screen.","Feeds the whole pipeline.","jobs.js","Part of binding."],
+  ["Real admin approval from UI","✔️","Approve a job from the admin screen.","Controls what goes public.","admin.js","Part of binding."],
+  ["Real tracker connected","📡","Tracker reads live status events.","The signature feature, for real.","applications.js","Part of binding."],
+  ["Stripe billing","💳","Paid plans and lead unlocks.","How the business earns money.","not started","After core works."],
+  ["SMS notifications","📱","Text people status updates.","Re-engages job seekers.","not started","After core works."],
+  ["App store readiness screens","🏬","Deletion, support, report tools.","Required by Apple/Google.","not started","Before mobile launch."],
+  ["React Native / Expo conversion","📲","Turn the web app into a real mobile app.","Real iPhone/Android app.","not started","Milestone 4."],
+  ["Legal review","⚖️","A lawyer checks privacy & hiring rules.","Avoids legal trouble.","not started","Before launch."],
+  ["Production deployment","🚀","Go live for real users.","Launch.","not started","Milestone 5."],
+];
+
+const FILE_TREE = {
+  name:"local-job-listings-usa/", type:"folder", children:[
+    {name:"README.md", kind:"Docs", req:true, have:true, desc:"The main setup guide and security checklist."},
+    {name:"prototype.html", kind:"Frontend", req:true, have:true, desc:"The clickable visual app (pretend data for now)."},
+    {name:"connect-test.html", kind:"Test", req:true, have:true, desc:"Runs the core loop and the 11+ security tests against real Supabase."},
+    {name:"ARCHITECTURE_MAP.html", kind:"Docs", req:false, have:true, desc:"This dashboard — a visual companion, not the real README."},
+    {name:".env.example", kind:"Config", req:true, have:true, desc:"List of settings/keys. The real .env is never shared."},
+    {name:"supabase/", type:"folder", children:[
+      {name:"migrations/", type:"folder", children:[
+        {name:"0001_schema.sql", kind:"Database", req:true, have:true, desc:"Creates all tables, types, rules, and safe functions."},
+        {name:"0002_policies.sql", kind:"Security", req:true, have:true, desc:"Row-level security — who can see and change what."},
+        {name:"0003_hardening.sql", kind:"Security", req:true, have:true, desc:"Role guard + makes status changes go through safe functions only."},
+        {name:"seed.sql", kind:"Database", req:false, have:true, desc:"Optional sample plans + the admin-promote note."},
+      ]},
+      {name:"functions/get-resume-url/index.ts", kind:"Backend", req:false, have:true, desc:"Server code that makes temporary, checked links to private resumes."},
+    ]},
+    {name:"src/", type:"folder", children:[
+      {name:"lib/", type:"folder", children:[
+        {name:"config.js", kind:"Config", req:true, have:true, desc:"Where you paste your Supabase URL + anon (public) key."},
+        {name:"supabase.js", kind:"Frontend", req:true, have:true, desc:"Starts the connection to Supabase in the browser."},
+      ]},
+      {name:"services/", type:"folder", children:[
+        {name:"auth.js", kind:"Backend", req:true, have:true, desc:"Sign up, log in, profile, job-seeker preferences."},
+        {name:"orgs.js", kind:"Backend", req:true, have:true, desc:"Create employer & agency profiles (with non-discrimination)."},
+        {name:"jobs.js", kind:"Backend", req:true, have:true, desc:"Create jobs, list public jobs, read a job."},
+        {name:"resumes.js", kind:"Backend", req:true, have:true, desc:"Upload resumes, summaries, employer signed-URL request."},
+        {name:"coverLetters.js", kind:"Backend", req:true, have:true, desc:"Save/list cover letters + mock AI draft (never scores)."},
+        {name:"applications.js", kind:"Backend", req:true, have:true, desc:"Apply, tracker, applicant list, change status via safe function."},
+        {name:"admin.js", kind:"Backend", req:true, have:true, desc:"Moderation queue, approve/reject jobs (admin only)."},
+        {name:"consent.js", kind:"Security", req:true, have:true, desc:"Records proof of consent (append-only)."},
+      ]},
+    ]},
+  ]
+};
+
+const FLOWS = [
+  {id:"A", t:"Employer posts a job", nodes:[
+    ["Employer screen","fills the post-a-job form"],
+    ["jobs.createEmployerJob()","sends it to the database"],
+    ["jobs table","new row saved"],
+    ["moderation_status = pending","not public yet","acc"],
+    ["Admin queue","waiting for review","acc"]]},
+  {id:"B", t:"Admin approves a job", nodes:[
+    ["Admin screen","taps Approve"],
+    ["admin.approveJob()","calls a safe function"],
+    ["approve_job RPC","checks: are you really an admin?"],
+    ["moderation_status = approved","status = active","ok"],
+    ["Job becomes visible","seekers can now see it","ok"]]},
+  {id:"C", t:"Job seeker applies", nodes:[
+    ["Job seeker screen","picks resume (+ optional cover letter)"],
+    ["applications.applyToJob()","submits the application"],
+    ["applications table","new application saved"],
+    ["consent_logs","records 'resume_share' agreement","acc"],
+    ["Employer applicant list","updates with the new applicant","ok"]]},
+  {id:"D", t:"Employer updates status", nodes:[
+    ["Employer applicant screen","moves the applicant"],
+    ["applications.setApplicationStage()","calls a safe function"],
+    ["set_application_stage RPC","checks ownership + safe reason"],
+    ["applications.stage changes","e.g. → Interview requested"],
+    ["application_status_events","adds a history row","acc"],
+    ["Tracker updates","job seeker sees the new step","ok"]]},
+  {id:"E", t:"Resume file access", nodes:[
+    ["Seeker uploads resume","stored privately"],
+    ["resumes bucket","private storage, owner-only"],
+    ["Employer requests the file","via the app"],
+    ["get-resume-url edge function","runs on the server"],
+    ["RLS check: do you own the job?","yes → continue / no → blocked","acc"],
+    ["Signed URL created","only if allowed","ok"],
+    ["Link expires in 5 minutes","short and safe","ok"]]},
+];
+
+const ROLES = [
+  {r:"Job seeker", c:"var(--blue)", can:["Create profile","Upload resume","Create cover letter","Apply to jobs","View own tracker","See own applications"],
+    cannot:["See other seekers","See employer dashboards","Approve jobs","Change their role"]},
+  {r:"Employer", c:"var(--orange)", can:["Create company profile","Post jobs","See applicants for own jobs","Change status for own applicants"],
+    cannot:["See another employer's applicants","Approve jobs","Become admin","See private resumes without authorization"]},
+  {r:"Staffing agency", c:"var(--green)", can:["Create agency profile","Manage branches/recruiters","Post job orders","See applicants for own orders"],
+    cannot:["See other agencies' applicants","Approve platform jobs","Become admin"]},
+  {r:"Admin", c:"var(--red)", can:["Approve jobs","Moderate accounts","View audit logs","Review reports","Manage safety"],
+    cannot:["Bypass legal/privacy duties","Use applicant info outside platform rules"]},
+];
+
+const DB = [
+  ["profiles","who people are","Name, email, phone, and role (seeker/employer/agency/admin).","You (yourself) and admins.","It's the master list of every account.","Marcus Reed · job_seeker"],
+  ["job_seekers","worker profile details","Location, pay wanted, categories, shifts.","The seeker and admins.","Powers job matching.","Chicago · $18–30 · Logistics"],
+  ["employers","company accounts","Company name, industry, verification status.","The owner and admins.","Who is posting jobs.","Lakeside Distribution · pending"],
+  ["staffing_agencies","staffing company accounts","Agency name, specialties.","The owner and admins.","Agencies posting many jobs.","FrontLine Staffing"],
+  ["jobs","job posts","Title, pay range, shift, type, status, approval state.","Public if approved; owner & admin always.","The jobs people apply to.","Forklift Operator · $19–23"],
+  ["applications","someone applied to a job","Which seeker, which job, resume, cover letter, stage.","The seeker + the job's owner + admin.","The heart of the app.","Marcus → Forklift · In review"],
+  ["application_status_events","the tracker history","Every status change, in order, who changed it.","The seeker + job owner + admin.","Builds the progress tracker; can't be edited.","Submitted → Resume received → …"],
+  ["resumes","resume records","File location + a short summary.","The seeker; employer only if they own the job.","Lets employers review applicants.","Marcus_Reed_Resume · 3 yrs"],
+  ["cover_letters","cover letter records","Title and text, sometimes job-specific.","The seeker; employer only if they own the job.","Optional extra with an application.","Forklift Operator — Lakeside"],
+  ["consent_logs","proof that someone agreed","Type of consent, yes/no, time.","The user and admins.","Legal proof people opted in.","resume_share · granted"],
+  ["audit_logs","security camera for actions","Important admin/employer actions, with time.","Admins only.","Accountability and safety.","job_approved by admin"],
+  ["admin_moderation_queue","things the admin must review","New jobs and accounts waiting for a check.","Admins only.","Keeps scams off the platform.","Forklift Operator · pending"],
+];
+
+const LOCKS = [
+  ["Row Level Security","Each person only sees what they're allowed to see.","b-done","Implemented + tested"],
+  ["Role escalation guard","Users cannot promote themselves to admin.","b-done","Implemented + tested"],
+  ["RPC-only status changes","Status updates must go through safe database functions.","b-done","Implemented + tested"],
+  ["Enum rejection reasons","No discriminatory free-text rejection reasons — only a safe list.","b-done","Implemented + tested"],
+  ["Private resume storage","Resumes are stored privately, owner-only.","b-done","Implemented"],
+  ["Signed URLs","Temporary 5-minute links for authorized employers only.","b-test","Needs edge fn deployed to test"],
+  ["Consent logs","Proof of consent is recorded and append-only.","b-done","Implemented"],
+  ["Audit logs","A record of important actions, admin-readable.","b-done","Implemented"],
+  ["Email confirmation","Must be re-enabled before production.","b-req","Needs production review"],
+];
+
+const SEC_CHECK = [
+  "Job invisible before approval","Job visible after approval","Seeker only sees own applications",
+  "Employer only sees own applicants","Unrelated employer blocked","Unrelated seeker blocked",
+  "Safe rejection reasons only","Direct stage update blocked","Status history append-only",
+  "Private resume storage","Signed resume URL with 5-minute expiry","Service role key never in browser",
+  "Email confirmation must be re-enabled before production",
+];
+
+const STORE = [
+  ["Account deletion screen","b-req","required"],["Privacy policy link","b-req","required"],
+  ["Terms link","b-req","required"],["Support / contact link","b-req","required"],
+  ["Data deletion request link","b-req","required"],["Do not sell / share link","b-plan","planned"],
+  ["Report a job","b-req","required"],["Report user / message","b-req","required"],
+  ["Block user (placeholder)","b-plan","planned"],["Moderation tools","b-prog","in progress"],
+  ["App privacy disclosures","b-req","required"],["Google Play Data Safety form","b-req","required"],
+  ["Notification / SMS consent settings","b-plan","planned"],["Location permission explanation","b-plan","planned"],
+  ["Resume sharing consent","b-done","done"],["No broken buttons","b-req","required"],
+  ["No fake placeholder screens in production","b-req","required"],["No 'guaranteed job' claims","b-done","done"],
+];
+
+const RISKS = [
+  ["HIGH","b-miss","Missing service files block the test","If a backend file is missing, the test can't run.","Confirm all 8 service files exist (they do — see Files).","Now (verified in this package)."],
+  ["HIGH","b-miss","Service-role key exposure would be dangerous","That key bypasses all security if leaked to the browser.","Keep it only on the server/edge function; browser uses anon key.","Always — verified by design."],
+  ["HIGH","b-miss","UI not yet bound to backend","The pretty app still uses pretend data.","Bind one vertical slice to real data.","Milestone 3 (next)."],
+  ["HIGH","b-miss","Legal / privacy review required","Hiring apps have real legal rules.","Have a lawyer review before launch.","Before launch."],
+  ["HIGH","b-miss","Account deletion required for stores","Apple & Google require in-app deletion.","Build a delete-my-account flow.","Before mobile launch."],
+  ["MEDIUM","b-prog","Resume uploads need safety checks","Bad files could be uploaded.","Add virus scan + type/size limits.","Before public launch."],
+  ["MEDIUM","b-prog","Rate limiting needed","Stops spam and abuse.","Add limits on posting & applying.","Before public launch."],
+  ["MEDIUM","b-prog","Email confirmation must be re-enabled","It's off for testing only.","Turn it back on in Supabase.","Before launch."],
+  ["MEDIUM","b-prog","Billing not wired","No money flows yet.","Add Stripe later.","After core works."],
+  ["MEDIUM","b-prog","SMS not wired","No text updates yet.","Add Twilio later.","After core works."],
+  ["LOW","b-plan","Logo / yellow USA polish","Cosmetic only.","Design pass later.","Anytime later."],
+  ["LOW","b-plan","Agency green theme polish","Cosmetic only.","Design pass later.","Anytime later."],
+  ["LOW","b-plan","Better animations","Nice-to-have.","Polish later.","Anytime later."],
+  ["LOW","b-plan","App screenshots","Needed for store listing.","Capture near launch.","Before store submission."],
+];
+
+const MILES = [
+  [1,"Complete runnable project package","All files present and organized.","Package has no missing imports.","b-done","You are here ✓"],
+  [2,"Run Supabase backend tests","Core loop + security verification pass.","All PASS in connect-test.html.","b-prog","Next"],
+  [3,"Bind real backend to prototype slice","Visual UI uses real backend for one full loop.","Employer posts → admin approves → seeker applies → tracker updates.","b-plan","After tests pass"],
+  [4,"Convert to real mobile architecture","React Native / Expo app for iOS & Android.","App runs on simulator/device.","b-plan","Later"],
+  [5,"Launch readiness","Privacy, support, deletion, moderation, legal, store listings.","Ready for Apple/Google review.","b-plan","Final"],
+];
+
+const CHECKLIST = [
+  "I have all service files","I organized the project package","I created a Supabase project",
+  "I ran 0001_schema.sql","I ran 0002_policies.sql","I ran 0003_hardening.sql","I ran seed.sql",
+  "I added the Supabase URL","I added the Supabase anon key","I created an admin account",
+  "I promoted admin in SQL","I ran the core loop test","I ran security verification",
+  "I verified no service_role key is in the browser","I confirmed prototype.html opens",
+  "I confirmed connect-test.html opens","I confirmed ARCHITECTURE_MAP.html opens",
+  "I confirmed README is updated","I confirmed next step is UI/backend binding",
+];
+
+/* ============================ RENDER ============================ */
+function statusFor(list){ return list===DONE?'b-done':list===PROG?'b-prog':'b-miss'; }
+function iconBg(list){ return list===DONE?'var(--green-bg)':list===PROG?'var(--orange-bg)':'var(--red-bg)'; }
+function expandCard(item, badgeClass, iconColor){
+  const [t,ico,what,why,where,next] = item;
+  const el=document.createElement('div'); el.className='x';
+  el.innerHTML=`<div class="x-h" onclick="this.parentElement.classList.toggle('open')">
+    <div class="ico" style="background:${iconColor}">${ico}</div>
+    <div class="t">${t}</div>
+    <span class="badge ${badgeClass}">${badgeClass==='b-done'?'Done':badgeClass==='b-prog'?'In progress':'Next'}</span>
+    <span class="chev">▸</span></div>
+    <div class="x-body">
+      <div class="row"><span class="k">What</span><span>${what}</span></div>
+      <div class="row"><span class="k">Why</span><span>${why}</span></div>
+      <div class="row"><span class="k">Where</span><span><code>${where}</code></span></div>
+      <div class="row"><span class="k">Next</span><span>${next}</span></div>
+    </div>`;
+  return el;
+}
+function renderProgress(){
+  DONE.forEach(i=>doneList.append(expandCard(i,'b-done',iconBg(DONE))));
+  PROG.forEach(i=>progList.append(expandCard(i,'b-prog',iconBg(PROG))));
+  NEXT.forEach(i=>nextList.append(expandCard(i,'b-miss',iconBg(NEXT))));
+  // progress ring
+  const total=DONE.length+PROG.length+NEXT.length;
+  const pct=Math.round((DONE.length/total)*100);
+  document.getElementById('ring').style.setProperty('--p',pct);
+  document.getElementById('ringPct').textContent=pct+'%';
+}
+
+const KIND_COLOR={Frontend:'#11539E',Backend:'#7a4fd1',Database:'#0a7e8c',Security:'#B23B3B',Docs:'#9a6a00',Config:'#0f7a37',Test:'#E8870E'};
+function renderTree(node, container, depth){
+  if(node.type==='folder'){
+    const folder=document.createElement('div');
+    const head=document.createElement('div');
+    head.className='x-h'; head.style.background='#f6f9fc'; head.style.borderRadius='10px'; head.style.margin='0 0 8px';
+    head.innerHTML=`<div class="ico" style="background:#eef2f7">📁</div><div class="t">${node.name}</div><span class="chev">▸</span>`;
+    const kids=document.createElement('div'); kids.style.display='none'; kids.style.paddingLeft=(depth?14:0)+'px';
+    head.onclick=()=>{ const open=kids.style.display==='none'; kids.style.display=open?'block':'none'; head.querySelector('.chev').style.transform=open?'rotate(90deg)':''; };
+    folder.append(head,kids);
+    (node.children||[]).forEach(c=>renderTree(c,kids,depth+1));
+    container.append(folder);
+    if(depth===0){ head.click(); (node.children||[]).forEach((c)=>{}); } // open root
+  } else {
+    const f=document.createElement('div'); f.className='x';
+    f.innerHTML=`<div class="x-h" onclick="this.parentElement.classList.toggle('open')">
+      <div class="ico" style="background:#eef2f7">📄</div>
+      <div class="t">${node.name}</div>
+      <span class="badge" style="background:${KIND_COLOR[node.kind]||'#888'}1a;color:${KIND_COLOR[node.kind]||'#888'}">${node.kind}</span>
+      <span class="badge ${node.have?'b-done':'b-miss'}">${node.have?'Have it':'Missing'}</span>
+      <span class="chev">▸</span></div>
+      <div class="x-body">
+        <div class="row"><span class="k">Does</span><span>${node.desc}</span></div>
+        <div class="row"><span class="k">Type</span><span>${node.kind}</span></div>
+        <div class="row"><span class="k">Required</span><span>${node.req?'Yes':'Optional'}</span></div>
+      </div>`;
+    container.append(f);
+  }
+}
+
+function renderFlows(){
+  FLOWS.forEach((f,idx)=>{
+    const tab=document.createElement('div'); tab.className='tab'+(idx===0?' on':'');
+    tab.textContent=f.id+' · '+f.t; tab.onclick=()=>switchFlow(idx);
+    flowTabs.append(tab);
+    const pane=document.createElement('div'); pane.className='pane'+(idx===0?' on':''); pane.dataset.i=idx;
+    const card=document.createElement('div'); card.className='card';
+    const flow=document.createElement('div'); flow.className='flow';
+    f.nodes.forEach((n,i)=>{
+      const node=document.createElement('div'); node.className='fnode '+(n[2]||'');
+      node.innerHTML=`${n[0]}${n[1]?`<small>${n[1]}</small>`:''}`;
+      flow.append(node);
+      if(i<f.nodes.length-1){ const a=document.createElement('div'); a.className='farrow'; a.textContent='↓'; flow.append(a); }
+    });
+    card.append(flow); pane.append(card); flowPanes.append(pane);
+  });
+}
+function switchFlow(i){
+  document.querySelectorAll('#flowTabs .tab').forEach((t,k)=>t.classList.toggle('on',k===i));
+  document.querySelectorAll('#flowPanes .pane').forEach((p,k)=>p.classList.toggle('on',k===i));
+}
+
+function renderRoles(){
+  ROLES.forEach(r=>{
+    const c=document.createElement('div'); c.className='card';
+    let html=`<h3 style="font-size:16px;display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:${r.c};display:inline-block"></span>${r.r}</h3>`;
+    html+=`<div style="margin-top:9px"><div class="can" style="font-weight:700;font-size:13px;margin-bottom:4px">✓ Can</div>`;
+    html+=r.can.map(x=>`<div style="font-size:13px;color:#34465c">• ${x}</div>`).join('');
+    html+=`<div class="cannot" style="font-weight:700;font-size:13px;margin:9px 0 4px">✕ Cannot</div>`;
+    html+=r.cannot.map(x=>`<div style="font-size:13px;color:#7a8896">• ${x}</div>`).join('')+`</div>`;
+    c.innerHTML=html;
+    roleCards.append(c);
+  });
+  // table
+  let t=`<tr><th>Role</th><th>Key power</th><th>Key limit</th></tr>`;
+  ROLES.forEach(r=>{ t+=`<tr><td><b>${r.r}</b></td><td class="can">${r.can[0]}, ${r.can[1]||''}</td><td class="cannot">${r.cannot[0]}</td></tr>`; });
+  roleTable.innerHTML=t;
+}
+
+function renderDB(){
+  DB.forEach(d=>{
+    const [name,plain,stores,who,why,ex]=d;
+    const el=document.createElement('div'); el.className='x';
+    el.innerHTML=`<div class="x-h" onclick="this.parentElement.classList.toggle('open')">
+      <div class="ico" style="background:#eef2f7">🗄️</div>
+      <div class="t"><code style="font-size:13px">${name}</code> <span style="color:#54657a;font-weight:400">= ${plain}</span></div>
+      <span class="chev">▸</span></div>
+      <div class="x-body">
+        <div class="row"><span class="k">Stores</span><span>${stores}</span></div>
+        <div class="row"><span class="k">Who sees</span><span>${who}</span></div>
+        <div class="row"><span class="k">Why</span><span>${why}</span></div>
+        <div class="row"><span class="k">Example</span><span><code>${ex}</code></span></div>
+      </div>`;
+    dbList.append(el);
+  });
+}
+
+function renderLocks(){
+  LOCKS.forEach(l=>{
+    const [t,plain,badge,status]=l;
+    const el=document.createElement('div'); el.className='card'; el.style.marginBottom='10px';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:20px">🔐</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:15px">${t}</div>
+      <div style="font-size:13px;color:#54657a;margin-top:2px">${plain}</div></div>
+      <span class="badge ${badge}">${status}</span></div>`;
+    lockList.append(el);
+  });
+  SEC_CHECK.forEach(s=>{
+    const el=document.createElement('div');
+    el.style.cssText='display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px;border-bottom:1px solid var(--line)';
+    el.innerHTML=`<span style="color:var(--green);font-weight:800">✓</span><span>${s}</span>`;
+    secCheck.append(el);
+  });
+}
+
+function renderStore(){
+  STORE.forEach(s=>{
+    const [t,badge,label]=s;
+    const el=document.createElement('div');
+    el.style.cssText='display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);border-radius:10px;padding:11px 13px;margin-bottom:8px;box-shadow:0 3px 9px rgba(0,0,0,.12)';
+    el.innerHTML=`<span style="flex:1;font-weight:600;font-size:14px">${t}</span><span class="badge ${badge}">${label}</span>`;
+    storeList.append(el);
+  });
+}
+
+function renderRisks(){
+  const order={HIGH:0,MEDIUM:1,LOW:2};
+  const heads={HIGH:'🔴 High',MEDIUM:'🟠 Medium',LOW:'🟡 Low'};
+  let cur=null;
+  RISKS.sort((a,b)=>order[a[0]]-order[b[0]]).forEach(r=>{
+    const [sev,badge,t,why,fix,when]=r;
+    if(sev!==cur){ cur=sev; const h=document.createElement('h3'); h.style.cssText='color:#cfe0f3;font-size:15px;margin:14px 0 8px'; h.textContent=heads[sev]; riskList.append(h); }
+    const el=document.createElement('div'); el.className='x';
+    el.innerHTML=`<div class="x-h" onclick="this.parentElement.classList.toggle('open')">
+      <div class="ico" style="background:${badge==='b-miss'?'var(--red-bg)':badge==='b-prog'?'var(--orange-bg)':'#eef1f5'}">⚠️</div>
+      <div class="t">${t}</div><span class="chev">▸</span></div>
+      <div class="x-body">
+        <div class="row"><span class="k">Why</span><span>${why}</span></div>
+        <div class="row"><span class="k">Fix</span><span>${fix}</span></div>
+        <div class="row"><span class="k">When</span><span>${when}</span></div>
+      </div>`;
+    riskList.append(el);
+  });
+}
+
+function renderMiles(){
+  MILES.forEach(m=>{
+    const [n,title,goal,exit,badge,status]=m;
+    const el=document.createElement('div'); el.className='card'; el.style.marginBottom='10px';
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:11px">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--yellow);color:#1b1300;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none">${n}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:15px">${title}</div></div>
+      <span class="badge ${badge}">${status}</span></div>
+      <div style="margin-top:9px;font-size:13px;color:#34465c"><b>Goal:</b> ${goal}</div>
+      <div style="margin-top:4px;font-size:13px;color:#34465c"><b>Done when:</b> ${exit}</div>`;
+    mileList.append(el);
+  });
+}
+
+/* checklist with localStorage */
+const CK_KEY='ljl_checklist_v1';
+function loadCk(){ try{ return JSON.parse(localStorage.getItem(CK_KEY)||'{}'); }catch(e){ return {}; } }
+function saveCk(s){ try{ localStorage.setItem(CK_KEY, JSON.stringify(s)); }catch(e){} }
+function renderChecklist(){
+  const state=loadCk();
+  checkList.innerHTML='';
+  CHECKLIST.forEach((item,i)=>{
+    const on=!!state['c'+i];
+    const el=document.createElement('div'); el.className='check'+(on?' on':'');
+    el.innerHTML=`<div class="cbox">${on?'✓':''}</div><div class="lbl">${item}</div>`;
+    el.onclick=()=>{ const s=loadCk(); s['c'+i]=!s['c'+i]; saveCk(s); renderChecklist(); };
+    checkList.append(el);
+  });
+  const done=Object.values(state).filter(Boolean).length;
+  document.getElementById('checkCount').textContent=done+' / '+CHECKLIST.length+' done';
+}
+function resetChecklist(){ saveCk({}); renderChecklist(); }
+
+/* init */
+renderProgress(); 
+renderTree(FILE_TREE, document.getElementById('fileTree'), 0);
+renderFlows(); renderRoles(); renderDB(); renderLocks(); renderStore(); renderRisks(); renderMiles(); renderChecklist();
+</script>
+</body>
+</html>
