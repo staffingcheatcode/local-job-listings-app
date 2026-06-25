@@ -1,4 +1,6 @@
 # Testing Guide — Local Job Listings USA (backend checkpoint)
+**NOTE (June 24, 2026):** Core loop test passed; security verification passed (15/15). The resume signed URL test is skipped until the `get-resume-url` edge function is deployed.
+
 
 This guide walks you through testing the **current package** so you can confirm the backend works.
 It assumes you have never used Supabase, GitHub, or a terminal. Go slowly, one step at a time.
